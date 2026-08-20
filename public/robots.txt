@@ -1,0 +1,47 @@
+# ServCheck — robots.txt
+# Allow all search engines and AI answer engines
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /history
+Disallow: /my-requests
+Disallow: /my-diagnostic-requests
+Disallow: /mechanic-portal
+Disallow: /workshop-dashboard
+Disallow: /results
+Disallow: /estimate-result
+
+# AI answer engine crawlers — explicitly allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+Sitemap: https://servcheck.com.au/sitemap.xml

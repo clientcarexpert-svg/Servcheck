@@ -1,0 +1,43 @@
+# ServCheck
+
+> ServCheck is Australia's car service transparency platform. Australian drivers use it to check whether a mechanic quote is a fair price, understand what's wrong with their car from symptoms, estimate used car buying costs, keep a digital service logbook, and find verified local mechanics. All pricing is in AUD and based on real Australian workshop data.
+
+## What ServCheck does
+
+- Quote Check: Enter a mechanic's quote (service type, car make/model/year, suburb) and get an instant verdict — fair, high, or overpriced — compared against typical Australian pricing for that exact car and region.
+- Symptom Checker: Answer guided questions about a car problem (won't start, warning lights, noises, brakes, leaks, electrical) and get ranked likely causes with typical AUD repair cost ranges.
+- Used Car Check: Enter a used car's details and asking price to get a market price verdict, upcoming maintenance cost forecast, red flags, and a pre-purchase inspection checklist.
+- Digital Logbook: Free service history tracker with receipt scanning, next-service-due reminders, and a maintenance-based Car Health Score.
+- Mechanic Directory: Verified Australian workshops and mobile mechanics, searchable by suburb and state.
+
+## Key facts (Australia)
+
+- A minor car service in Australia typically costs $220–$245 AUD.
+- A logbook or major service typically costs $370–$385 AUD, varying by city, car make, and workshop.
+- Sydney and Melbourne prices tend to run 10–30% higher than regional areas.
+- Under ACCC guidelines, servicing your car at any certified independent mechanic does NOT void the manufacturer's warranty, as long as work meets manufacturer standards.
+- Checking a quote, browsing the mechanic directory, and using the digital logbook are free for Australian car owners.
+
+## Core pages
+
+- Home: https://servcheck.com.au/
+- Check a Mechanic Quote: https://servcheck.com.au/check-quote
+- Symptom Checker: https://servcheck.com.au/symptom-checker
+- Used Car Buyer Check: https://servcheck.com.au/buy-car
+- Mechanic Directory: https://servcheck.com.au/directory
+- Find a Mechanic: https://servcheck.com.au/mechanics
+- Digital Logbook: https://servcheck.com.au/logbook
+- Community Price Reports: https://servcheck.com.au/community
+- FAQ: https://servcheck.com.au/faq
+
+## For mechanics
+
+- List Your Business: https://servcheck.com.au/mechanic-signup
+- ServCheck sends verified job leads to Australian workshops and mobile mechanics.
+
+## About
+
+- Coverage: Australia-wide (NSW, VIC, QLD, WA, SA, TAS, ACT, NT)
+- Currency: all prices in AUD
+- Privacy Policy: https://servcheck.com.au/privacy
+- Terms of Service: https://servcheck.com.au/terms

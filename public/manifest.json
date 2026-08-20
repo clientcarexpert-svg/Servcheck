@@ -1,0 +1,24 @@
+{
+  "name": "ServCheck — Car Service Checker",
+  "short_name": "ServCheck",
+  "description": "Check if your mechanic quote is fair. Australia's car service transparency platform.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#122A46",
+  "theme_color": "#1a237e",
+  "icons": [
+    {
+      "src": "https://media.base44.com/images/public/69c3e608178c08315713aa79/e31c5e75b_generated_image.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://media.base44.com/images/public/69c3e608178c08315713aa79/e31c5e75b_generated_image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
