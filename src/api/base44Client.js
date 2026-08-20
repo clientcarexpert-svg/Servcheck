@@ -167,6 +167,25 @@ const auth = {
     const next = encodeURIComponent(fromUrl || window.location.href);
     window.location.href = `/login?next=${next}`;
   },
+  // --- New: Base44 hosted its own login/signup page externally.
+  // Now that the app is self-hosted, these back the in-app /login page. ---
+  async signIn(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
+  },
+  async signUp(email, password, fullName) {
+    const { data, error } = await supabase.auth.signUp({
+      email, password,
+      options: { data: { full_name: fullName || '' } },
+    });
+    if (error) throw error;
+    return data;
+  },
+  onAuthChange(callback) {
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => callback(session));
+    return () => data.subscription.unsubscribe();
+  },
 };
 
 // ---------------------------------------------------------------------------

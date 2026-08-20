@@ -16,6 +16,7 @@ import Home from './pages/Home.jsx';
 import CheckQuote from './pages/CheckQuote';
 import Profile from './pages/Profile';
 import FAQ from './pages/FAQ';
+import Login from './pages/Login';
 
 // Lazy-loaded pages (code-split)
 const Results = lazy(() => import('./pages/Results'));
@@ -73,6 +74,9 @@ const AuthenticatedApp = () => {
   return (
     <Suspense fallback={<LazyLoadFallback />}>
       <Routes>
+        {/* Login/signup -- self-hosted now; Base44 previously hosted this externally */}
+        <Route path="/login" element={<Login />} />
+
         {/* Public competitor landing pages (SEO) */}
         {COMPETITORS.map(({ slug, name }) => (
           <Route key={slug} path={`/vs/${slug}`} element={<VsCompetitor competitor={name} slug={slug} />} />

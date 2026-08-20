@@ -43,3 +43,12 @@ Secrets (set via `supabase secrets set KEY=value`):
 3. The remaining ~56 functions get ported in priority batches after that.
 4. Only once everything above is tested does the real domain move over.
    Base44 stays live as the production app until this is fully proven.
+
+## Known remaining item
+
+- `index.html` favicon and og:image/twitter:image still point at
+  `base44.com` / `media.base44.com`. Cosmetic only, but a real
+  dependency on Base44's servers staying up. Replace with the actual
+  ServCheck logo hosted locally in `public/` once available -- save it
+  as `public/favicon.svg` (or .png) and update the three URLs in
+  `index.html` to `/favicon.svg` etc.
