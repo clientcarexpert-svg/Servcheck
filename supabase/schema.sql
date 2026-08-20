@@ -34,10 +34,17 @@ begin
 end; $$;
 create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
 
+
+-- Helper: current logged-in user's email (used as default + in RLS policies)
+create or replace function public.current_user_email() returns text
+language sql stable security definer set search_path = public as $$
+  select email from public.profiles where id = auth.uid()
+$$;
+
 -- ========== AccountDeletion ==========
 create table public.account_deletions (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   user_email text,
   user_full_name text,
   deletion_reason text,
@@ -47,30 +54,30 @@ create table public.account_deletions (
   updated_at timestamptz default now()
 );
 alter table public.account_deletions enable row level security;
-create policy "account_deletions_select_own" on public.account_deletions for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "account_deletions_insert_own" on public.account_deletions for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "account_deletions_update_own" on public.account_deletions for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "account_deletions_delete_own" on public.account_deletions for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "account_deletions_select_own" on public.account_deletions for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "account_deletions_insert_own" on public.account_deletions for insert with check (user_email = public.current_user_email());
+create policy "account_deletions_update_own" on public.account_deletions for update using (user_email = public.current_user_email());
+create policy "account_deletions_delete_own" on public.account_deletions for delete using (user_email = public.current_user_email());
 
 -- ========== AppStats ==========
 create table public.app_stats (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   key text,
   value_number numeric default 0,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 alter table public.app_stats enable row level security;
-create policy "app_stats_select_own" on public.app_stats for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "app_stats_insert_own" on public.app_stats for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "app_stats_update_own" on public.app_stats for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "app_stats_delete_own" on public.app_stats for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "app_stats_select_own" on public.app_stats for select using (created_by = public.current_user_email());
+create policy "app_stats_insert_own" on public.app_stats for insert with check (created_by = public.current_user_email());
+create policy "app_stats_update_own" on public.app_stats for update using (created_by = public.current_user_email());
+create policy "app_stats_delete_own" on public.app_stats for delete using (created_by = public.current_user_email());
 
 -- ========== CarListing ==========
 create table public.car_listings (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   car_make text,
   car_model text,
   car_year text,
@@ -97,15 +104,15 @@ create table public.car_listings (
   updated_at timestamptz default now()
 );
 alter table public.car_listings enable row level security;
-create policy "car_listings_select_own" on public.car_listings for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "car_listings_insert_own" on public.car_listings for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "car_listings_update_own" on public.car_listings for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "car_listings_delete_own" on public.car_listings for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "car_listings_select_own" on public.car_listings for select using (created_by = public.current_user_email());
+create policy "car_listings_insert_own" on public.car_listings for insert with check (created_by = public.current_user_email());
+create policy "car_listings_update_own" on public.car_listings for update using (created_by = public.current_user_email());
+create policy "car_listings_delete_own" on public.car_listings for delete using (created_by = public.current_user_email());
 
 -- ========== CarProfile ==========
 create table public.car_profiles (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   profile_name text,
   car_make text,
   car_model text,
@@ -132,15 +139,15 @@ create table public.car_profiles (
   updated_at timestamptz default now()
 );
 alter table public.car_profiles enable row level security;
-create policy "car_profiles_select_own" on public.car_profiles for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "car_profiles_insert_own" on public.car_profiles for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "car_profiles_update_own" on public.car_profiles for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "car_profiles_delete_own" on public.car_profiles for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "car_profiles_select_own" on public.car_profiles for select using (created_by = public.current_user_email());
+create policy "car_profiles_insert_own" on public.car_profiles for insert with check (created_by = public.current_user_email());
+create policy "car_profiles_update_own" on public.car_profiles for update using (created_by = public.current_user_email());
+create policy "car_profiles_delete_own" on public.car_profiles for delete using (created_by = public.current_user_email());
 
 -- ========== CommunityPost ==========
 create table public.community_posts (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   state text,
   suburb text,
   service_type text,
@@ -157,15 +164,15 @@ create table public.community_posts (
   updated_at timestamptz default now()
 );
 alter table public.community_posts enable row level security;
-create policy "community_posts_select_own" on public.community_posts for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "community_posts_insert_own" on public.community_posts for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "community_posts_update_own" on public.community_posts for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "community_posts_delete_own" on public.community_posts for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "community_posts_select_own" on public.community_posts for select using (created_by = public.current_user_email());
+create policy "community_posts_insert_own" on public.community_posts for insert with check (created_by = public.current_user_email());
+create policy "community_posts_update_own" on public.community_posts for update using (created_by = public.current_user_email());
+create policy "community_posts_delete_own" on public.community_posts for delete using (created_by = public.current_user_email());
 
 -- ========== CreditTransaction ==========
 create table public.credit_transactions (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   user_email text,
   action text,
   amount numeric,
@@ -181,15 +188,15 @@ create table public.credit_transactions (
   updated_at timestamptz default now()
 );
 alter table public.credit_transactions enable row level security;
-create policy "credit_transactions_select_own" on public.credit_transactions for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "credit_transactions_insert_own" on public.credit_transactions for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "credit_transactions_update_own" on public.credit_transactions for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "credit_transactions_delete_own" on public.credit_transactions for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "credit_transactions_select_own" on public.credit_transactions for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "credit_transactions_insert_own" on public.credit_transactions for insert with check (user_email = public.current_user_email());
+create policy "credit_transactions_update_own" on public.credit_transactions for update using (user_email = public.current_user_email());
+create policy "credit_transactions_delete_own" on public.credit_transactions for delete using (user_email = public.current_user_email());
 
 -- ========== DealerLead ==========
 create table public.dealer_leads (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   quote_check_id text,
   dealer_id text,
   dealer_profile_id text,
@@ -211,15 +218,15 @@ create table public.dealer_leads (
   updated_at timestamptz default now()
 );
 alter table public.dealer_leads enable row level security;
-create policy "dealer_leads_select_own" on public.dealer_leads for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "dealer_leads_insert_own" on public.dealer_leads for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "dealer_leads_update_own" on public.dealer_leads for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "dealer_leads_delete_own" on public.dealer_leads for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "dealer_leads_select_own" on public.dealer_leads for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "dealer_leads_insert_own" on public.dealer_leads for insert with check (user_email = public.current_user_email());
+create policy "dealer_leads_update_own" on public.dealer_leads for update using (user_email = public.current_user_email());
+create policy "dealer_leads_delete_own" on public.dealer_leads for delete using (user_email = public.current_user_email());
 
 -- ========== DealerProfile ==========
 create table public.dealer_profiles (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   dealer_id text,
   user_email text,
   business_name text,
@@ -238,15 +245,15 @@ create table public.dealer_profiles (
   updated_at timestamptz default now()
 );
 alter table public.dealer_profiles enable row level security;
-create policy "dealer_profiles_select_own" on public.dealer_profiles for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "dealer_profiles_insert_own" on public.dealer_profiles for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "dealer_profiles_update_own" on public.dealer_profiles for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "dealer_profiles_delete_own" on public.dealer_profiles for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "dealer_profiles_select_own" on public.dealer_profiles for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "dealer_profiles_insert_own" on public.dealer_profiles for insert with check (user_email = public.current_user_email());
+create policy "dealer_profiles_update_own" on public.dealer_profiles for update using (user_email = public.current_user_email());
+create policy "dealer_profiles_delete_own" on public.dealer_profiles for delete using (user_email = public.current_user_email());
 
 -- ========== DiagnosticOffer ==========
 create table public.diagnostic_offers (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   diagnostic_request_id text,
   mechanic_profile_id text,
   mechanic_email text,
@@ -263,15 +270,15 @@ create table public.diagnostic_offers (
   updated_at timestamptz default now()
 );
 alter table public.diagnostic_offers enable row level security;
-create policy "diagnostic_offers_select_own" on public.diagnostic_offers for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "diagnostic_offers_insert_own" on public.diagnostic_offers for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "diagnostic_offers_update_own" on public.diagnostic_offers for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "diagnostic_offers_delete_own" on public.diagnostic_offers for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "diagnostic_offers_select_own" on public.diagnostic_offers for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "diagnostic_offers_insert_own" on public.diagnostic_offers for insert with check (user_email = public.current_user_email());
+create policy "diagnostic_offers_update_own" on public.diagnostic_offers for update using (user_email = public.current_user_email());
+create policy "diagnostic_offers_delete_own" on public.diagnostic_offers for delete using (user_email = public.current_user_email());
 
 -- ========== DiagnosticRequest ==========
 create table public.diagnostic_requests (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   user_email text,
   user_full_name text,
   car_make text,
@@ -288,15 +295,15 @@ create table public.diagnostic_requests (
   updated_at timestamptz default now()
 );
 alter table public.diagnostic_requests enable row level security;
-create policy "diagnostic_requests_select_own" on public.diagnostic_requests for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "diagnostic_requests_insert_own" on public.diagnostic_requests for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "diagnostic_requests_update_own" on public.diagnostic_requests for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "diagnostic_requests_delete_own" on public.diagnostic_requests for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "diagnostic_requests_select_own" on public.diagnostic_requests for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "diagnostic_requests_insert_own" on public.diagnostic_requests for insert with check (user_email = public.current_user_email());
+create policy "diagnostic_requests_update_own" on public.diagnostic_requests for update using (user_email = public.current_user_email());
+create policy "diagnostic_requests_delete_own" on public.diagnostic_requests for delete using (user_email = public.current_user_email());
 
 -- ========== DirectoryClick ==========
 create table public.directory_clicks (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   business_name text,
   suburb text,
   state text,
@@ -306,15 +313,15 @@ create table public.directory_clicks (
   updated_at timestamptz default now()
 );
 alter table public.directory_clicks enable row level security;
-create policy "directory_clicks_select_own" on public.directory_clicks for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "directory_clicks_insert_own" on public.directory_clicks for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "directory_clicks_update_own" on public.directory_clicks for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "directory_clicks_delete_own" on public.directory_clicks for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "directory_clicks_select_own" on public.directory_clicks for select using (created_by = public.current_user_email());
+create policy "directory_clicks_insert_own" on public.directory_clicks for insert with check (created_by = public.current_user_email());
+create policy "directory_clicks_update_own" on public.directory_clicks for update using (created_by = public.current_user_email());
+create policy "directory_clicks_delete_own" on public.directory_clicks for delete using (created_by = public.current_user_email());
 
 -- ========== FranchisePricing ==========
 create table public.franchise_pricings (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   franchise text,
   service_type text,
   state text,
@@ -329,15 +336,15 @@ create table public.franchise_pricings (
   updated_at timestamptz default now()
 );
 alter table public.franchise_pricings enable row level security;
-create policy "franchise_pricings_select_own" on public.franchise_pricings for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "franchise_pricings_insert_own" on public.franchise_pricings for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "franchise_pricings_update_own" on public.franchise_pricings for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "franchise_pricings_delete_own" on public.franchise_pricings for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "franchise_pricings_select_own" on public.franchise_pricings for select using (created_by = public.current_user_email());
+create policy "franchise_pricings_insert_own" on public.franchise_pricings for insert with check (created_by = public.current_user_email());
+create policy "franchise_pricings_update_own" on public.franchise_pricings for update using (created_by = public.current_user_email());
+create policy "franchise_pricings_delete_own" on public.franchise_pricings for delete using (created_by = public.current_user_email());
 
 -- ========== HistoricalPricing ==========
 create table public.historical_pricings (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   service_type text,
   suburb text,
   state text,
@@ -350,15 +357,15 @@ create table public.historical_pricings (
   updated_at timestamptz default now()
 );
 alter table public.historical_pricings enable row level security;
-create policy "historical_pricings_select_own" on public.historical_pricings for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "historical_pricings_insert_own" on public.historical_pricings for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "historical_pricings_update_own" on public.historical_pricings for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "historical_pricings_delete_own" on public.historical_pricings for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "historical_pricings_select_own" on public.historical_pricings for select using (created_by = public.current_user_email());
+create policy "historical_pricings_insert_own" on public.historical_pricings for insert with check (created_by = public.current_user_email());
+create policy "historical_pricings_update_own" on public.historical_pricings for update using (created_by = public.current_user_email());
+create policy "historical_pricings_delete_own" on public.historical_pricings for delete using (created_by = public.current_user_email());
 
 -- ========== LogbookEntry ==========
 create table public.logbook_entrys (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   car_make text,
   car_model text,
   car_year text,
@@ -378,15 +385,15 @@ create table public.logbook_entrys (
   updated_at timestamptz default now()
 );
 alter table public.logbook_entrys enable row level security;
-create policy "logbook_entrys_select_own" on public.logbook_entrys for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "logbook_entrys_insert_own" on public.logbook_entrys for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "logbook_entrys_update_own" on public.logbook_entrys for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "logbook_entrys_delete_own" on public.logbook_entrys for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "logbook_entrys_select_own" on public.logbook_entrys for select using (created_by = public.current_user_email());
+create policy "logbook_entrys_insert_own" on public.logbook_entrys for insert with check (created_by = public.current_user_email());
+create policy "logbook_entrys_update_own" on public.logbook_entrys for update using (created_by = public.current_user_email());
+create policy "logbook_entrys_delete_own" on public.logbook_entrys for delete using (created_by = public.current_user_email());
 
 -- ========== MechanicBooking ==========
 create table public.mechanic_bookings (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   mechanic_profile_id text,
   mechanic_email text,
   lead_id text,
@@ -415,15 +422,15 @@ create table public.mechanic_bookings (
   updated_at timestamptz default now()
 );
 alter table public.mechanic_bookings enable row level security;
-create policy "mechanic_bookings_select_own" on public.mechanic_bookings for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_bookings_insert_own" on public.mechanic_bookings for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_bookings_update_own" on public.mechanic_bookings for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_bookings_delete_own" on public.mechanic_bookings for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "mechanic_bookings_select_own" on public.mechanic_bookings for select using (created_by = public.current_user_email());
+create policy "mechanic_bookings_insert_own" on public.mechanic_bookings for insert with check (created_by = public.current_user_email());
+create policy "mechanic_bookings_update_own" on public.mechanic_bookings for update using (created_by = public.current_user_email());
+create policy "mechanic_bookings_delete_own" on public.mechanic_bookings for delete using (created_by = public.current_user_email());
 
 -- ========== MechanicDirectory ==========
 create table public.mechanic_directorys (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   business_name text,
   address text,
   suburb text,
@@ -438,15 +445,15 @@ create table public.mechanic_directorys (
   updated_at timestamptz default now()
 );
 alter table public.mechanic_directorys enable row level security;
-create policy "mechanic_directorys_select_own" on public.mechanic_directorys for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_directorys_insert_own" on public.mechanic_directorys for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_directorys_update_own" on public.mechanic_directorys for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_directorys_delete_own" on public.mechanic_directorys for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "mechanic_directorys_select_own" on public.mechanic_directorys for select using (created_by = public.current_user_email());
+create policy "mechanic_directorys_insert_own" on public.mechanic_directorys for insert with check (created_by = public.current_user_email());
+create policy "mechanic_directorys_update_own" on public.mechanic_directorys for update using (created_by = public.current_user_email());
+create policy "mechanic_directorys_delete_own" on public.mechanic_directorys for delete using (created_by = public.current_user_email());
 
 -- ========== MechanicLead ==========
 create table public.mechanic_leads (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   quote_check_id text,
   state text,
   area_type text,
@@ -490,15 +497,15 @@ create table public.mechanic_leads (
   updated_at timestamptz default now()
 );
 alter table public.mechanic_leads enable row level security;
-create policy "mechanic_leads_select_own" on public.mechanic_leads for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "mechanic_leads_insert_own" on public.mechanic_leads for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_leads_update_own" on public.mechanic_leads for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_leads_delete_own" on public.mechanic_leads for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "mechanic_leads_select_own" on public.mechanic_leads for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "mechanic_leads_insert_own" on public.mechanic_leads for insert with check (user_email = public.current_user_email());
+create policy "mechanic_leads_update_own" on public.mechanic_leads for update using (user_email = public.current_user_email());
+create policy "mechanic_leads_delete_own" on public.mechanic_leads for delete using (user_email = public.current_user_email());
 
 -- ========== MechanicNotification ==========
 create table public.mechanic_notifications (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   mechanic_email text,
   mechanic_profile_id text,
   title text,
@@ -511,15 +518,15 @@ create table public.mechanic_notifications (
   updated_at timestamptz default now()
 );
 alter table public.mechanic_notifications enable row level security;
-create policy "mechanic_notifications_select_own" on public.mechanic_notifications for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_notifications_insert_own" on public.mechanic_notifications for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_notifications_update_own" on public.mechanic_notifications for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_notifications_delete_own" on public.mechanic_notifications for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "mechanic_notifications_select_own" on public.mechanic_notifications for select using (created_by = public.current_user_email());
+create policy "mechanic_notifications_insert_own" on public.mechanic_notifications for insert with check (created_by = public.current_user_email());
+create policy "mechanic_notifications_update_own" on public.mechanic_notifications for update using (created_by = public.current_user_email());
+create policy "mechanic_notifications_delete_own" on public.mechanic_notifications for delete using (created_by = public.current_user_email());
 
 -- ========== MechanicProfile ==========
 create table public.mechanic_profiles (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   mechanic_id text,
   user_email text,
   business_name text,
@@ -558,15 +565,15 @@ create table public.mechanic_profiles (
   updated_at timestamptz default now()
 );
 alter table public.mechanic_profiles enable row level security;
-create policy "mechanic_profiles_select_own" on public.mechanic_profiles for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "mechanic_profiles_insert_own" on public.mechanic_profiles for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_profiles_update_own" on public.mechanic_profiles for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "mechanic_profiles_delete_own" on public.mechanic_profiles for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "mechanic_profiles_select_own" on public.mechanic_profiles for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "mechanic_profiles_insert_own" on public.mechanic_profiles for insert with check (user_email = public.current_user_email());
+create policy "mechanic_profiles_update_own" on public.mechanic_profiles for update using (user_email = public.current_user_email());
+create policy "mechanic_profiles_delete_own" on public.mechanic_profiles for delete using (user_email = public.current_user_email());
 
 -- ========== PartsPricing ==========
 create table public.parts_pricings (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   part_name text,
   part_category text,
   car_make text,
@@ -584,15 +591,15 @@ create table public.parts_pricings (
   updated_at timestamptz default now()
 );
 alter table public.parts_pricings enable row level security;
-create policy "parts_pricings_select_own" on public.parts_pricings for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "parts_pricings_insert_own" on public.parts_pricings for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "parts_pricings_update_own" on public.parts_pricings for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "parts_pricings_delete_own" on public.parts_pricings for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "parts_pricings_select_own" on public.parts_pricings for select using (created_by = public.current_user_email());
+create policy "parts_pricings_insert_own" on public.parts_pricings for insert with check (created_by = public.current_user_email());
+create policy "parts_pricings_update_own" on public.parts_pricings for update using (created_by = public.current_user_email());
+create policy "parts_pricings_delete_own" on public.parts_pricings for delete using (created_by = public.current_user_email());
 
 -- ========== PromptInsight ==========
 create table public.prompt_insights (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   service_type text,
   state text,
   car_make text,
@@ -606,15 +613,15 @@ create table public.prompt_insights (
   updated_at timestamptz default now()
 );
 alter table public.prompt_insights enable row level security;
-create policy "prompt_insights_select_own" on public.prompt_insights for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "prompt_insights_insert_own" on public.prompt_insights for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "prompt_insights_update_own" on public.prompt_insights for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "prompt_insights_delete_own" on public.prompt_insights for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "prompt_insights_select_own" on public.prompt_insights for select using (created_by = public.current_user_email());
+create policy "prompt_insights_insert_own" on public.prompt_insights for insert with check (created_by = public.current_user_email());
+create policy "prompt_insights_update_own" on public.prompt_insights for update using (created_by = public.current_user_email());
+create policy "prompt_insights_delete_own" on public.prompt_insights for delete using (created_by = public.current_user_email());
 
 -- ========== QuoteCheck ==========
 create table public.quote_checks (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   car_make text,
   car_model text,
   car_year text,
@@ -650,15 +657,15 @@ create table public.quote_checks (
   updated_at timestamptz default now()
 );
 alter table public.quote_checks enable row level security;
-create policy "quote_checks_select_own" on public.quote_checks for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "quote_checks_insert_own" on public.quote_checks for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "quote_checks_update_own" on public.quote_checks for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "quote_checks_delete_own" on public.quote_checks for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "quote_checks_select_own" on public.quote_checks for select using (created_by = public.current_user_email());
+create policy "quote_checks_insert_own" on public.quote_checks for insert with check (created_by = public.current_user_email());
+create policy "quote_checks_update_own" on public.quote_checks for update using (created_by = public.current_user_email());
+create policy "quote_checks_delete_own" on public.quote_checks for delete using (created_by = public.current_user_email());
 
 -- ========== QuoteRequest ==========
 create table public.quote_requests (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   mechanic_email text,
   mechanic_profile_id text,
   mechanic_business_name text,
@@ -683,15 +690,15 @@ create table public.quote_requests (
   updated_at timestamptz default now()
 );
 alter table public.quote_requests enable row level security;
-create policy "quote_requests_select_own" on public.quote_requests for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "quote_requests_insert_own" on public.quote_requests for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "quote_requests_update_own" on public.quote_requests for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "quote_requests_delete_own" on public.quote_requests for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "quote_requests_select_own" on public.quote_requests for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "quote_requests_insert_own" on public.quote_requests for insert with check (user_email = public.current_user_email());
+create policy "quote_requests_update_own" on public.quote_requests for update using (user_email = public.current_user_email());
+create policy "quote_requests_delete_own" on public.quote_requests for delete using (user_email = public.current_user_email());
 
 -- ========== ReceiptAudit ==========
 create table public.receipt_audits (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   user_email text,
   receipt_hash text,
   month text,
@@ -701,15 +708,15 @@ create table public.receipt_audits (
   updated_at timestamptz default now()
 );
 alter table public.receipt_audits enable row level security;
-create policy "receipt_audits_select_own" on public.receipt_audits for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "receipt_audits_insert_own" on public.receipt_audits for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "receipt_audits_update_own" on public.receipt_audits for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "receipt_audits_delete_own" on public.receipt_audits for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "receipt_audits_select_own" on public.receipt_audits for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "receipt_audits_insert_own" on public.receipt_audits for insert with check (user_email = public.current_user_email());
+create policy "receipt_audits_update_own" on public.receipt_audits for update using (user_email = public.current_user_email());
+create policy "receipt_audits_delete_own" on public.receipt_audits for delete using (user_email = public.current_user_email());
 
 -- ========== ReceiptVerification ==========
 create table public.receipt_verifications (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   community_post_id text,
   user_email text,
   receipt_url text,
@@ -722,15 +729,15 @@ create table public.receipt_verifications (
   updated_at timestamptz default now()
 );
 alter table public.receipt_verifications enable row level security;
-create policy "receipt_verifications_select_own" on public.receipt_verifications for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "receipt_verifications_insert_own" on public.receipt_verifications for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "receipt_verifications_update_own" on public.receipt_verifications for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "receipt_verifications_delete_own" on public.receipt_verifications for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "receipt_verifications_select_own" on public.receipt_verifications for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "receipt_verifications_insert_own" on public.receipt_verifications for insert with check (user_email = public.current_user_email());
+create policy "receipt_verifications_update_own" on public.receipt_verifications for update using (user_email = public.current_user_email());
+create policy "receipt_verifications_delete_own" on public.receipt_verifications for delete using (user_email = public.current_user_email());
 
 -- ========== SavingsReport ==========
 create table public.savings_reports (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   quote_check_id text,
   amount_saved numeric,
   comment text,
@@ -739,15 +746,15 @@ create table public.savings_reports (
   updated_at timestamptz default now()
 );
 alter table public.savings_reports enable row level security;
-create policy "savings_reports_select_own" on public.savings_reports for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "savings_reports_insert_own" on public.savings_reports for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "savings_reports_update_own" on public.savings_reports for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "savings_reports_delete_own" on public.savings_reports for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "savings_reports_select_own" on public.savings_reports for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "savings_reports_insert_own" on public.savings_reports for insert with check (user_email = public.current_user_email());
+create policy "savings_reports_update_own" on public.savings_reports for update using (user_email = public.current_user_email());
+create policy "savings_reports_delete_own" on public.savings_reports for delete using (user_email = public.current_user_email());
 
 -- ========== ScrapeQueue ==========
 create table public.scrape_queues (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   state text,
   area_type text,
   service_type text,
@@ -764,15 +771,15 @@ create table public.scrape_queues (
   updated_at timestamptz default now()
 );
 alter table public.scrape_queues enable row level security;
-create policy "scrape_queues_select_own" on public.scrape_queues for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "scrape_queues_insert_own" on public.scrape_queues for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "scrape_queues_update_own" on public.scrape_queues for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "scrape_queues_delete_own" on public.scrape_queues for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "scrape_queues_select_own" on public.scrape_queues for select using (created_by = public.current_user_email());
+create policy "scrape_queues_insert_own" on public.scrape_queues for insert with check (created_by = public.current_user_email());
+create policy "scrape_queues_update_own" on public.scrape_queues for update using (created_by = public.current_user_email());
+create policy "scrape_queues_delete_own" on public.scrape_queues for delete using (created_by = public.current_user_email());
 
 -- ========== ServicePriceCache ==========
 create table public.service_price_caches (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   cache_key text,
   car_make text,
   car_model text,
@@ -808,30 +815,30 @@ create table public.service_price_caches (
   updated_at timestamptz default now()
 );
 alter table public.service_price_caches enable row level security;
-create policy "service_price_caches_select_own" on public.service_price_caches for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "service_price_caches_insert_own" on public.service_price_caches for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "service_price_caches_update_own" on public.service_price_caches for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "service_price_caches_delete_own" on public.service_price_caches for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "service_price_caches_select_own" on public.service_price_caches for select using (created_by = public.current_user_email());
+create policy "service_price_caches_insert_own" on public.service_price_caches for insert with check (created_by = public.current_user_email());
+create policy "service_price_caches_update_own" on public.service_price_caches for update using (created_by = public.current_user_email());
+create policy "service_price_caches_delete_own" on public.service_price_caches for delete using (created_by = public.current_user_email());
 
 -- ========== SignupLog ==========
 create table public.signup_logs (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   user_email text,
   ip_address text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 alter table public.signup_logs enable row level security;
-create policy "signup_logs_select_own" on public.signup_logs for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "signup_logs_insert_own" on public.signup_logs for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "signup_logs_update_own" on public.signup_logs for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "signup_logs_delete_own" on public.signup_logs for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "signup_logs_select_own" on public.signup_logs for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "signup_logs_insert_own" on public.signup_logs for insert with check (user_email = public.current_user_email());
+create policy "signup_logs_update_own" on public.signup_logs for update using (user_email = public.current_user_email());
+create policy "signup_logs_delete_own" on public.signup_logs for delete using (user_email = public.current_user_email());
 
 -- ========== SuburbWaitlist ==========
 create table public.suburb_waitlists (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   suburb text,
   state text,
   user_email text,
@@ -839,15 +846,15 @@ create table public.suburb_waitlists (
   updated_at timestamptz default now()
 );
 alter table public.suburb_waitlists enable row level security;
-create policy "suburb_waitlists_select_own" on public.suburb_waitlists for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "suburb_waitlists_insert_own" on public.suburb_waitlists for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "suburb_waitlists_update_own" on public.suburb_waitlists for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "suburb_waitlists_delete_own" on public.suburb_waitlists for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "suburb_waitlists_select_own" on public.suburb_waitlists for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "suburb_waitlists_insert_own" on public.suburb_waitlists for insert with check (user_email = public.current_user_email());
+create policy "suburb_waitlists_update_own" on public.suburb_waitlists for update using (user_email = public.current_user_email());
+create policy "suburb_waitlists_delete_own" on public.suburb_waitlists for delete using (user_email = public.current_user_email());
 
 -- ========== SymptomDiagnosis ==========
 create table public.symptom_diagnosis (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   car_make text,
   car_model text,
   car_year text,
@@ -872,15 +879,15 @@ create table public.symptom_diagnosis (
   updated_at timestamptz default now()
 );
 alter table public.symptom_diagnosis enable row level security;
-create policy "symptom_diagnosis_select_own" on public.symptom_diagnosis for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "symptom_diagnosis_insert_own" on public.symptom_diagnosis for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "symptom_diagnosis_update_own" on public.symptom_diagnosis for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "symptom_diagnosis_delete_own" on public.symptom_diagnosis for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "symptom_diagnosis_select_own" on public.symptom_diagnosis for select using (created_by = public.current_user_email());
+create policy "symptom_diagnosis_insert_own" on public.symptom_diagnosis for insert with check (created_by = public.current_user_email());
+create policy "symptom_diagnosis_update_own" on public.symptom_diagnosis for update using (created_by = public.current_user_email());
+create policy "symptom_diagnosis_delete_own" on public.symptom_diagnosis for delete using (created_by = public.current_user_email());
 
 -- ========== UsedCarCheck ==========
 create table public.used_car_checks (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   car_make text,
   car_model text,
   car_year text,
@@ -909,15 +916,15 @@ create table public.used_car_checks (
   updated_at timestamptz default now()
 );
 alter table public.used_car_checks enable row level security;
-create policy "used_car_checks_select_own" on public.used_car_checks for select using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "used_car_checks_insert_own" on public.used_car_checks for insert with check (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "used_car_checks_update_own" on public.used_car_checks for update using (created_by = (select email from public.profiles where id = auth.uid()));
-create policy "used_car_checks_delete_own" on public.used_car_checks for delete using (created_by = (select email from public.profiles where id = auth.uid()));
+create policy "used_car_checks_select_own" on public.used_car_checks for select using (created_by = public.current_user_email());
+create policy "used_car_checks_insert_own" on public.used_car_checks for insert with check (created_by = public.current_user_email());
+create policy "used_car_checks_update_own" on public.used_car_checks for update using (created_by = public.current_user_email());
+create policy "used_car_checks_delete_own" on public.used_car_checks for delete using (created_by = public.current_user_email());
 
 -- ========== UserAcceptances ==========
 create table public.user_acceptances (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   user_email text,
   privacy_policy_accepted boolean default false,
   terms_accepted boolean default false,
@@ -932,15 +939,15 @@ create table public.user_acceptances (
   updated_at timestamptz default now()
 );
 alter table public.user_acceptances enable row level security;
-create policy "user_acceptances_select_own" on public.user_acceptances for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "user_acceptances_insert_own" on public.user_acceptances for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "user_acceptances_update_own" on public.user_acceptances for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "user_acceptances_delete_own" on public.user_acceptances for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "user_acceptances_select_own" on public.user_acceptances for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "user_acceptances_insert_own" on public.user_acceptances for insert with check (user_email = public.current_user_email());
+create policy "user_acceptances_update_own" on public.user_acceptances for update using (user_email = public.current_user_email());
+create policy "user_acceptances_delete_own" on public.user_acceptances for delete using (user_email = public.current_user_email());
 
 -- ========== Workshop ==========
 create table public.workshops (
   id uuid primary key default gen_random_uuid(),
-  created_by text default (select email from public.profiles where id = auth.uid()),
+  created_by text default public.current_user_email(),
   business_name text,
   abn text,
   user_email text,
@@ -957,10 +964,10 @@ create table public.workshops (
   updated_at timestamptz default now()
 );
 alter table public.workshops enable row level security;
-create policy "workshops_select_own" on public.workshops for select using (user_email = (select email from public.profiles where id = auth.uid()) or auth.role() = 'service_role');
-create policy "workshops_insert_own" on public.workshops for insert with check (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "workshops_update_own" on public.workshops for update using (user_email = (select email from public.profiles where id = auth.uid()));
-create policy "workshops_delete_own" on public.workshops for delete using (user_email = (select email from public.profiles where id = auth.uid()));
+create policy "workshops_select_own" on public.workshops for select using (user_email = public.current_user_email() or auth.role() = 'service_role');
+create policy "workshops_insert_own" on public.workshops for insert with check (user_email = public.current_user_email());
+create policy "workshops_update_own" on public.workshops for update using (user_email = public.current_user_email());
+create policy "workshops_delete_own" on public.workshops for delete using (user_email = public.current_user_email());
 
 -- NOTE: Several tables need broader-than-owner READ access (public directory
 -- browsing, cross-user marketplace reads). Review and replace select policies
