@@ -28,6 +28,12 @@ const supabase = createClient(
 
 export { supabase };
 
+// Alias: some app code calls supabase.auth.onAuthChange
+supabase.auth.onAuthChange = (callback) => {
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => callback(session));
+  return () => data.subscription.unsubscribe();
+};
+
 // ---------------------------------------------------------------------------
 // Entity name -> table name (snake_case, pluralised to match schema.sql)
 // ---------------------------------------------------------------------------
