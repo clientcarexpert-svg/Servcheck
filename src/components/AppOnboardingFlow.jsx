@@ -8,7 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { TERMS_VERSION, PRIVACY_POLICY_VERSION } from '@/lib/legalVersions';
 
 export default function AppOnboardingFlow({ onComplete }) {
-  const [step, setStep] = useState(1); // 1: privacy+terms, 2: email OTP verification, 3: location
+  const [step, setStep] = useState(1); // 1: privacy+terms, 2: email OTP verification (skipped), 3: location
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedMarketing, setAcceptedMarketing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,7 +66,9 @@ export default function AppOnboardingFlow({ onComplete }) {
         toast.error('Please accept the Privacy Policy and Terms of Service to continue.');
         return;
       }
-      sendOtp(); // verify email before granting the free credit
+      // Supabase already verified the email through its confirmation link,
+      // so skip the old OTP step and go straight to location.
+      setStep(3);
     }
   };
 
@@ -117,15 +119,22 @@ export default function AppOnboardingFlow({ onComplete }) {
   const handleConsumerSignup = async () => {
     setLoading(true);
     try {
-      await base44.functions.invoke('recordUserAcceptances', {
-        privacy_policy_accepted: true,
-        terms_accepted: true,
-        privacy_policy_version: PRIVACY_POLICY_VERSION,
-        terms_version: TERMS_VERSION,
-        camera_permission: 'pending',
-        install_source: installSource,
-        marketing_emails: acceptedMarketing,
-      });
+      // Record acceptance directly in the user_acceptances table.
+      // Wrapped so a failure here never blocks the user from getting in.
+      try {
+        await base44.entities.UserAcceptance.create({
+          user_email: userEmail,
+          privacy_policy_accepted: true,
+          terms_accepted: true,
+          privacy_policy_version: PRIVACY_POLICY_VERSION,
+          terms_version: TERMS_VERSION,
+          accepted_at: new Date().toISOString(),
+          camera_permission: 'pending',
+          install_source: installSource,
+        });
+      } catch (e) {
+        console.warn('Could not record acceptance:', e);
+      }
       localStorage.setItem(`legal_accepted_${TERMS_VERSION}_${PRIVACY_POLICY_VERSION}`, '1');
       await base44.auth.updateMe({ 
         terms_accepted: true, 
@@ -138,6 +147,7 @@ export default function AppOnboardingFlow({ onComplete }) {
       onComplete();
       navigate('/');
     } catch (err) {
+      console.error(err);
       toast.error('Setup failed. Please try again.');
     } finally {
       setLoading(false);
@@ -296,7 +306,7 @@ export default function AppOnboardingFlow({ onComplete }) {
               disabled={!acceptedTerms || loading}
               className="w-full h-10 bg-accent text-white font-semibold text-sm hover:bg-accent/90"
             >
-              {loading ? "Sending code..." : "Continue"}
+              {loading ? "Please wait..." : "Continue"}
             </Button>
           )}
 
