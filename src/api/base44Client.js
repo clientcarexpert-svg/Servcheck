@@ -264,6 +264,7 @@ const Core = {
 export const base44 = {
   entities: new Proxy({}, entityHandler),
   auth,
+  onAuthChange: auth.onAuthChange,
   functions,
   integrations: { Core },
 };
