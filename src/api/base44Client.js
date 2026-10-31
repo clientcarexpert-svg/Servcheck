@@ -201,7 +201,11 @@ const auth = {
 // ---------------------------------------------------------------------------
 const functions = {
   async invoke(name, payload = {}) {
-    const { data, error } = await supabase.functions.invoke(name, { body: payload });
+    // invoke-llm has its own function; everything else goes through the "api" router
+    const target = name === 'invoke-llm'
+      ? supabase.functions.invoke(name, { body: payload })
+      : supabase.functions.invoke('api', { body: { fn: name, payload } });
+    const { data, error } = await target;
     if (error) throw error;
     return { data };
   },

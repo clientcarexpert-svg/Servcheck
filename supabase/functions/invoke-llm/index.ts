@@ -19,6 +19,13 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
+// Only these models can be requested. Anything else (e.g. old Base44 names like
+// "gemini_3_flash") falls back to the cheap default. Stops cost abuse.
+const ALLOWED_MODELS = ['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6'];
+const DEFAULT_MODEL = 'claude-haiku-5-5';
+const MAX_PROMPT_CHARS = 20000;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -72,11 +79,18 @@ Deno.serve(async (req) => {
 
   try {
     if (mode === 'extract') {
+      // Only allow reading files in the caller's own folder
+      if (typeof storage_path !== 'string' || !storage_path.startsWith(`${user.id}/`)) {
+        return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: cors });
+      }
       // Read the file with the service role (private bucket) — server side only
       const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
       const { data: blob, error } = await admin.storage.from('uploads').download(storage_path);
       if (error) throw error;
 
+      if (blob.size > MAX_FILE_BYTES) {
+        return new Response(JSON.stringify({ error: 'file too large' }), { status: 413, headers: cors });
+      }
       const bytes = new Uint8Array(await blob.arrayBuffer());
       let binary = '';
       for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
@@ -109,9 +123,12 @@ Deno.serve(async (req) => {
         { headers: { ...cors, 'content-type': 'application/json' } });
     }
 
+    if (typeof prompt !== 'string' || prompt.length === 0 || prompt.length > MAX_PROMPT_CHARS) {
+      return new Response(JSON.stringify({ error: 'invalid prompt' }), { status: 400, headers: cors });
+    }
     // mode === "llm" — text only. Files are never accepted here.
     const result = await callClaude({
-      model: typeof model === 'string' && model.startsWith('claude') ? model : 'claude-sonnet-4-6',
+      model: typeof model === 'string' && ALLOWED_MODELS.includes(model) ? model : DEFAULT_MODEL,
       max_tokens: 4000,
       system: response_json_schema
         ? `Respond with raw JSON only matching this schema, no markdown fences:\n${JSON.stringify(response_json_schema)}`
