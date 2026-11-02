@@ -79,21 +79,30 @@ export default function Admin() {
 
   const loadAll = async () => {
     setLoading(true);
-    const [u, p, q, c, w, d, ct, mp, lb, ml, qr] = await Promise.all([
-      base44.entities.User.list("-created_date", 500),
-      base44.entities.CommunityPost.list("-created_date", 500),
-      base44.entities.QuoteCheck.list("-created_date", 500),
-      base44.entities.UsedCarCheck.list("-created_date", 500),
-      base44.entities.Workshop.list("-created_date", 500),
-      base44.entities.DirectoryClick.list("-created_date", 500),
-      base44.entities.CreditTransaction.list("-created_date", 500),
-      base44.entities.MechanicProfile.list("-created_date", 500),
-      base44.entities.LogbookEntry.list("-created_date", 500),
-      base44.entities.MechanicLead.list("-created_date", 500),
-      base44.entities.QuoteRequest.list("-created_date", 500),
-    ]);
-    setUsers(u); setPosts(p); setQuotes(q); setCarChecks(c); setWorkshops(w); setDirClicks(d); setCreditTransactions(ct); setMechanicProfiles(mp); setLogbookEntries(lb); setLeads(ml); setQuoteRequests(qr);
-    setLoading(false);
+    try {
+      const results = await Promise.allSettled([
+        base44.entities.User.list("-created_date", 500),
+        base44.entities.CommunityPost.list("-created_date", 500),
+        base44.entities.QuoteCheck.list("-created_date", 500),
+        base44.entities.UsedCarCheck.list("-created_date", 500),
+        base44.entities.Workshop.list("-created_date", 500),
+        base44.entities.DirectoryClick.list("-created_date", 500),
+        base44.entities.CreditTransaction.list("-created_date", 500),
+        base44.entities.MechanicProfile.list("-created_date", 500),
+        base44.entities.LogbookEntry.list("-created_date", 500),
+        base44.entities.MechanicLead.list("-created_date", 500),
+        base44.entities.QuoteRequest.list("-created_date", 500),
+      ]);
+      const get = (i) => {
+        const r = results[i];
+        if (r.status === "fulfilled") return r.value;
+        console.error("Admin load failed for query", i, r.reason);
+        return [];
+      };
+      setUsers(get(0)); setPosts(get(1)); setQuotes(get(2)); setCarChecks(get(3)); setWorkshops(get(4)); setDirClicks(get(5)); setCreditTransactions(get(6)); setMechanicProfiles(get(7)); setLogbookEntries(get(8)); setLeads(get(9)); setQuoteRequests(get(10));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filter = (arr, fields) =>

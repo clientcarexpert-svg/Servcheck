@@ -40,10 +40,26 @@ export function getCredits() {
   return parseInt(val, 10);
 }
 
+// Stable per-browser device id (used server-side so only the first account on a device gets free signup credits)
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem("sc_device_id");
+    if (!id) {
+      id = (typeof crypto !== "undefined" && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("sc_device_id", id);
+    }
+    return id;
+  } catch {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+}
+
 // Sync from DB and update local cache — call on app load
 export async function syncCreditsFromDB() {
   try {
-    const res = await base44.functions.invoke("getCredits", {});
+    const res = await base44.functions.invoke("getCredits", { device_id: getDeviceId() });
     const credits = res.data?.credits ?? 0;
     localStorage.setItem(CREDITS_KEY, String(credits));
     window.dispatchEvent(new Event("credits-updated"));

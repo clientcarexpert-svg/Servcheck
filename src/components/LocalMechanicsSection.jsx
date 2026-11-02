@@ -5,19 +5,6 @@ import { toast } from "sonner";
 import { MapPin, Wrench, X, Send, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Haversine formula
-function getDistanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
 // Rough metro postcode check for Australian states
 const METRO_POSTCODES = {
   NSW: [/^2[0-1]\d\d$/, /^2\d{3}$/],  // Sydney metro generally 2000-2239
@@ -44,21 +31,6 @@ function isMetroSuburb(state, suburb) {
   return metroKeywords.some(k => suburb.toLowerCase().includes(k));
 }
 
-async function getUserCoords(suburb, state) {
-  const q = encodeURIComponent(`${suburb}, ${state}, Australia`);
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
-    { headers: { "Accept-Language": "en" } }
-  );
-  const data = await res.json();
-  if (data.length === 0) return null;
-  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-}
-
-async function getMechanicCoords(suburb, state) {
-  return getUserCoords(suburb, state);
-}
-
 export default function LocalMechanicsSection({ quoteData }) {
   const [mechanics, setMechanics] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,27 +50,29 @@ export default function LocalMechanicsSection({ quoteData }) {
   const loadNearbyMechanics = async () => {
     setLoading(true);
     try {
-      const userCoords = await getUserCoords(quoteData.suburb, quoteData.state);
+      // Customer location comes from our own suburbs table (public postcode data), no external geocoder
+      const loc = await base44.functions.invoke("lookupSuburb", {
+        postcode: quoteData.postcode,
+        suburb: quoteData.suburb,
+        state: quoteData.state,
+      });
+      const userCoords = loc.data?.found ? { lat: loc.data.lat, lon: loc.data.lon } : null;
       if (!userCoords) { setLoading(false); return; }
 
-      // Fetch verified, active mechanics in same state (safe public fields only)
-      const res = await base44.functions.invoke("getPublicMechanics", { state: quoteData.state });
+      // Verified, active mechanics in the same state. Server returns lat/lon/distance_km, nearest first.
+      const res = await base44.functions.invoke("getPublicMechanics", {
+        state: quoteData.state,
+        origin_lat: userCoords.lat,
+        origin_lon: userCoords.lon,
+      });
       const allMechanics = res.data?.mechanics || [];
 
       const metro = isMetroSuburb(quoteData.state, quoteData.suburb);
       const workshopRadius = metro ? 15 : 20;
 
-      // Geocode each mechanic and calculate distance from user's suburb
-      const withDistance = [];
-      for (const m of allMechanics) {
-        if (!m.suburb) continue;
-        try {
-          const coords = await getMechanicCoords(m.suburb, m.state);
-          if (!coords) continue;
-          const dist = getDistanceKm(userCoords.lat, userCoords.lon, coords.lat, coords.lon);
-          withDistance.push({ ...m, _distance: Math.round(dist * 10) / 10, _coords: coords });
-        } catch { /* skip */ }
-      }
+      const withDistance = allMechanics
+        .filter(m => m.distance_km !== null && m.distance_km !== undefined)
+        .map(m => ({ ...m, _distance: m.distance_km }));
 
       // Workshops: user must be within workshopRadius of the workshop's suburb
       // Mobile mechanics: user must be within the mechanic's own service_radius_km

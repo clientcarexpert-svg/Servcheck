@@ -6,6 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+function safeNextPath(raw) {
+  try {
+    const u = new URL(raw || "/", window.location.origin);
+    if (u.origin !== window.location.origin) return "/";
+    const path = u.pathname + u.search + u.hash;
+    return path.startsWith("/login") ? "/" : path;
+  } catch {
+    return "/";
+  }
+}
+
 export default function Login() {
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
   const [email, setEmail] = useState("");
@@ -16,7 +27,7 @@ export default function Login() {
   const [checkEmail, setCheckEmail] = useState(false);
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const next = params.get("next") || "/";
+  const next = safeNextPath(params.get("next"));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

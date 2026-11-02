@@ -38,6 +38,7 @@ supabase.auth.onAuthChange = (callback) => {
 // Entity name -> table name (snake_case, pluralised to match schema.sql)
 // ---------------------------------------------------------------------------
 const toTable = (name) => {
+  if (name === 'User') return 'profiles';
   const s = name.replace(/(?<!^)(?=[A-Z])/g, '_').toLowerCase();
   return s.endsWith('s') ? s : s + 's';
 };
