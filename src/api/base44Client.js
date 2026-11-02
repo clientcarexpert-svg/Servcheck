@@ -207,7 +207,14 @@ const functions = {
       ? supabase.functions.invoke(name, { body: payload })
       : supabase.functions.invoke('api', { body: { fn: name, payload } });
     const { data, error } = await target;
-    if (error) throw error;
+    if (error) {
+      // Expose the backend's JSON error body as error.response.data (same shape the old SDK used)
+      try {
+        const body = await error.context?.json?.();
+        if (body) error.response = { data: body };
+      } catch (_) { /* body was not JSON */ }
+      throw error;
+    }
     return { data };
   },
 };
