@@ -200,12 +200,22 @@ const auth = {
 // Keep the SAME function names when porting each base44/functions/* file,
 // so all 74 existing call sites keep working untouched.
 // ---------------------------------------------------------------------------
+// These run in the separate "mechanic" Edge Function (leads, subscriptions, requests)
+const MECHANIC_FUNCTIONS = new Set([
+  'updateMechanicPreferences', 'broadcastMechanicLeads', 'getMechanicLeads', 'claimMechanicLead',
+  'sendQuoteRequest', 'sendJobToMechanic', 'notifyMobileMechanics', 'getOpenDiagnosticRequests',
+  'submitDiagnosticOffer', 'createMechanicCheckout', 'getMechanicSubscriptionStatus',
+  'cancelMechanicSubscription', 'createWorkshopListing', 'createProCheckout',
+]);
+
 const functions = {
   async invoke(name, payload = {}) {
     // invoke-llm has its own function; everything else goes through the "api" router
     const target = name === 'invoke-llm'
       ? supabase.functions.invoke(name, { body: payload })
-      : supabase.functions.invoke('api', { body: { fn: name, payload } });
+      : MECHANIC_FUNCTIONS.has(name)
+        ? supabase.functions.invoke('mechanic', { body: { fn: name, payload } })
+        : supabase.functions.invoke('api', { body: { fn: name, payload } });
     const { data, error } = await target;
     if (error) {
       // Expose the backend's JSON error body as error.response.data (same shape the old SDK used)

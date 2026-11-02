@@ -85,25 +85,12 @@ export default function DiagnosticRequestModal({ onClose, prefillCar, mechanicTy
         status: "open",
       });
 
-      // Filter mechanics by state + active, and optionally by type
-      const filterObj = { state: form.state, is_active: true };
-      if (mechanicType) filterObj.mechanic_type = mechanicType;
+      // Notify matching mechanics server-side (contact details stay private)
+      await base44.functions.invoke("notifyMobileMechanics", {
+        diagnostic_request_id: request.id,
+        mechanic_type: mechanicType || "mobile_mechanic",
+      });
 
-      const mechanics = await base44.entities.MechanicProfile.filter(filterObj, null, 100);
-
-      const notifPromises = mechanics.map(m =>
-        base44.entities.MechanicNotification.create({
-          mechanic_profile_id: m.id,
-          mechanic_email: m.user_email,
-          title: "New Diagnostic Request",
-          message: `${form.car_year} ${form.car_make} ${form.car_model} in ${form.suburb}, ${form.state}. Problem: "${form.problem_description.slice(0, 80)}". Submit a flat fee offer!`,
-          type: "quote_request",
-          is_read: false,
-          quote_request_id: request.id,
-        })
-      );
-
-      await Promise.all(notifPromises);
       setDone(true);
     } catch (err) {
       console.error(err);

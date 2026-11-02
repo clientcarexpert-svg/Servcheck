@@ -114,7 +114,11 @@ export default function LiveLeadsFeed({ profile: initialProfile, isVerified = tr
 
   const fetchLeads = useCallback(async () => {
     if (!profile) return;
-    const all = await base44.entities.MechanicLead.filter({ state: profile.state }, "-created_date", 50);
+    let all = [];
+    try {
+      const res = await base44.functions.invoke("getMechanicLeads", { profile_id: profile.id });
+      all = res.data?.leads || [];
+    } catch { return; }
     const mechanicType = profile.mechanic_type || 'workshop';
 
     const visible = all.filter(l => {
@@ -218,7 +222,7 @@ export default function LiveLeadsFeed({ profile: initialProfile, isVerified = tr
   useEffect(() => {
     const id = setInterval(() => {
       fetchLeads();
-    }, 60000); // 60s fallback instead of 10s — subscription handles real-time
+    }, 15000); // poll every 15s (new leads are only visible through the server)
     return () => clearInterval(id);
   }, [fetchLeads]);
 
