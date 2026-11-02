@@ -198,7 +198,7 @@ export default function VerdictCard({ data }) {
       {overcharge > 0 && (
         <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
           <p className={`font-heading text-lg font-bold ${config.textColor}`}>
-            You're being charged ${overcharge.toLocaleString()} more than average
+            Your quote is ${overcharge.toLocaleString()} above the average price
           </p>
         </div>
       )}

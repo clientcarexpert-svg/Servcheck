@@ -34,7 +34,8 @@ export default function CarHealthScore({ userId }) {
           const { score, biggestFactor, factors } = calculateCarHealthScore(
             entries,
             quotes,
-            p.last_odometer || null
+            p.last_odometer || null,
+            p.car_year || null
           );
           return {
             id: p.id,

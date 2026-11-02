@@ -30,7 +30,11 @@ function Callout({ children }) {
 }
 
 export default function TermsOfService() {
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => {
+    const id = window.location.hash.replace("#", "");
+    const el = id ? document.getElementById(id) : null;
+    if (el) el.scrollIntoView(); else window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +51,7 @@ export default function TermsOfService() {
             <ArrowLeft className="h-3.5 w-3.5" /> Back to ServCheck
           </Link>
           <H1>Terms of Service</H1>
-          <p className="text-xs text-muted-foreground mt-1">Last updated: 28 June 2026</p>
+          <p className="text-xs text-muted-foreground mt-1">Last updated: 2 November 2026</p>
         </div>
       </div>
 
@@ -103,6 +107,23 @@ export default function TermsOfService() {
           <LI>Each receipt file may only be submitted once. Duplicate submissions will not be rewarded.</LI>
           <LI>Submitting duplicate, fabricated, or non-automotive receipts in order to earn credits is a breach of these Terms and may result in account suspension.</LI>
         </UL>
+
+        <div id="vehicle-history-reports">
+        <H2>7A. Vehicle History Reports</H2>
+        <P>You may create a ServCheck Vehicle History Report for a car and share it with other people, for example a person who is thinking of buying the car. This clause applies to every report and to everyone who creates, shares or views one.</P>
+        <Callout>
+          <Strong>A ServCheck Vehicle History Report is not a verified or official history of the vehicle.</Strong> It is built only from information that users have entered or uploaded (such as logbook entries, receipts, photos and odometer readings) and from automated scanning of those uploads. ServCheck does not check this information against workshops, manufacturers, government registers or any other source, and cannot confirm that it is complete, accurate or genuine.
+        </Callout>
+        <UL>
+          <LI><Strong>Authenticity is not verified.</Strong> Receipts, dates, odometer readings and other entries may be incomplete, wrong, edited or made up. Scanning reads what is written on an uploaded document. It does not confirm that the document is real or that the work was done.</LI>
+          <LI><Strong>Scores and ratings are not a condition report.</Strong> Any health score, rating or summary in a report reflects only what has been recorded in ServCheck. It is not a measure of the car's condition, safety, roadworthiness or value. A high score does not mean the car is in good condition, and missing history does not mean it is in bad condition.</LI>
+          <LI><Strong>Do a PPSR check and an independent inspection.</Strong> A ServCheck report does not show whether a car is stolen, written off, has money owing on it, or has had its odometer tampered with. Buyers should run a check on the Personal Property Securities Register (PPSR) at ppsr.gov.au, arrange an independent pre-purchase inspection, and confirm the history directly with the seller and the workshops named. The ServCheck report is only one source of information.</LI>
+          <LI><Strong>Sellers are responsible for what they upload and say.</Strong> If you create or share a report, you confirm that the information you uploaded is true, that you are entitled to share it, and that it is not misleading. You must not edit, fabricate or leave out records to mislead a buyer. A report does not replace your own legal obligations when selling a vehicle, including your obligations under the Australian Consumer Law and the laws of your state or territory to be honest about the car, including known defects and any money owing.</LI>
+          <LI><Strong>Buyers rely on reports at their own risk.</Strong> You should not make a purchase decision based on a ServCheck report alone.</LI>
+          <LI><Strong>ServCheck is not part of the sale.</Strong> We are not a party to any sale of a vehicle, we do not endorse any car or seller, and, subject to clause 12 and the Australian Consumer Law, we are not responsible for any decision made or loss suffered because of a report.</LI>
+          <LI><Strong>Removal.</Strong> We may remove or disable a report, and suspend an account, if we suspect that a report contains false or misleading information.</LI>
+        </UL>
+        </div>
 
         <H2>8. Referral Program</H2>
         <P>Each user receives one personal invite code. The following terms apply to the referral program.</P>

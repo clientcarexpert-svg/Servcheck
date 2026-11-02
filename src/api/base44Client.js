@@ -251,13 +251,18 @@ const Core = {
   },
 
   async InvokeLLM({ prompt, response_json_schema, add_context_from_internet, file_urls, model }) {
-    // PRIVACY GUARD: never forward raw user files to the LLM from the client.
-    // Use ExtractDataFromUploadedFile first, then pass only structured fields.
-    if (file_urls?.length) {
-      console.warn('[privacy] file_urls stripped from InvokeLLM — use ExtractDataFromUploadedFile first.');
-    }
+    // Files are never sent from the browser. The backend downloads the user's own uploaded
+    // files from private storage using the storage path found inside the signed URL.
+    const storage_paths = (file_urls || [])
+      .map((u) => {
+        try {
+          const m = new URL(u).pathname.match(/\/object\/sign\/uploads\/(.+)$/);
+          return m ? decodeURIComponent(m[1]) : null;
+        } catch (_) { return null; }
+      })
+      .filter(Boolean);
     const { data, error } = await supabase.functions.invoke('invoke-llm', {
-      body: { mode: 'llm', prompt, response_json_schema, add_context_from_internet, model },
+      body: { mode: 'llm', prompt, response_json_schema, add_context_from_internet, model, storage_paths },
     });
     if (error) throw error;
     return data;
