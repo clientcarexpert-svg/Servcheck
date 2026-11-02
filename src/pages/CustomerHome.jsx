@@ -71,7 +71,7 @@ export default function CustomerHome() {
           <p className="text-lg leading-relaxed mb-2 text-slate-300 max-w-sm">
             ServCheck checks your quote against real Australian market data — verdict in seconds.
           </p>
-          <p className="text-sm font-bold text-[#f97316] mb-6">✓ First check on us — free</p>
+          <p className="text-sm font-bold text-[#f97316] mb-6">✓ First check on us — <span className="text-emerald-400">free</span></p>
 
           <button
             onClick={() => navigate("/check-quote")}
