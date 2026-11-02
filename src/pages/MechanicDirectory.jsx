@@ -69,11 +69,9 @@ export default function MechanicDirectory() {
     setScLoading(true);
     setScSearched(false);
     try {
-      const results = await base44.entities.MechanicProfile.filter(
-        { state: searchState, is_active: true, verification_status: "verified" },
-        "-subscription_tier",
-        50
-      );
+      // Public list comes from the server (other mechanics' private details never reach the browser)
+      const pubRes = await base44.functions.invoke("getPublicMechanics", { state: searchState });
+      const results = [...(pubRes.data?.mechanics || [])];
       results.sort((a, b) => {
         if (a.subscription_tier === "featured" && b.subscription_tier !== "featured") return -1;
         if (b.subscription_tier === "featured" && a.subscription_tier !== "featured") return 1;

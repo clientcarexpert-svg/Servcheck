@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { MapPin, Wrench, X, Send, Loader2 } from "lucide-react";
+import { MapPin, Wrench, X, Send, Loader2, Star } from "lucide-react";
+
+// Featured mechanics are listed first, then nearest
+const featuredThenNearest = (a, b) => {
+  const fa = a.subscription_tier === "featured" ? 0 : 1;
+  const fb = b.subscription_tier === "featured" ? 0 : 1;
+  return fa - fb || a._distance - b._distance;
+};
 import { motion, AnimatePresence } from "framer-motion";
 
 // Rough metro postcode check for Australian states
@@ -86,14 +93,14 @@ export default function LocalMechanicsSection({ quoteData }) {
 
       let nearby = withDistance
         .filter(m => passesRadius(m))
-        .sort((a, b) => a._distance - b._distance)
+        .sort(featuredThenNearest)
         .slice(0, 5);
 
       // Expand workshop radius to 30km if no results
       if (nearby.length === 0) {
         nearby = withDistance
           .filter(m => passesRadius(m, 30))
-          .sort((a, b) => a._distance - b._distance)
+          .sort(featuredThenNearest)
           .slice(0, 5);
       }
 
@@ -159,6 +166,9 @@ export default function LocalMechanicsSection({ quoteData }) {
           >
             <div>
               <p className="font-bold text-sm text-[#1a237e] leading-tight">{m.business_name}</p>
+              {m.subscription_tier === "featured" && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100 rounded-full px-2 py-0.5 mt-1"><Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" /> Featured</span>
+              )}
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   m.mechanic_type === "workshop"

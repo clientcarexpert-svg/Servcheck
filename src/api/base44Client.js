@@ -202,7 +202,7 @@ const auth = {
 // ---------------------------------------------------------------------------
 // These run in the separate "mechanic" Edge Function (leads, subscriptions, requests)
 const MECHANIC_FUNCTIONS = new Set([
-  'updateMechanicPreferences', 'broadcastMechanicLeads', 'getMechanicLeads', 'claimMechanicLead',
+  'getPublicMechanics', 'updateMechanicPreferences', 'broadcastMechanicLeads', 'getMechanicLeads', 'claimMechanicLead',
   'sendQuoteRequest', 'sendJobToMechanic', 'notifyMobileMechanics', 'getOpenDiagnosticRequests',
   'submitDiagnosticOffer', 'createMechanicCheckout', 'getMechanicSubscriptionStatus',
   'cancelMechanicSubscription', 'createWorkshopListing', 'createProCheckout',
