@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import SEOHead from "../components/SEOHead";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import VerdictCard from "../components/VerdictCard";
+import VerdictCard, { getTier, consistentMeterScore } from "../components/VerdictCard";
 import PriceBreakdown from "../components/PriceBreakdown";
 import CounterOffer from "../components/CounterOffer";
 import BullshitMeter from "../components/BullshitMeter";
@@ -129,11 +129,11 @@ export default function Results() {
     (data.quoted_price && data.price_low && data.price_low > 0 &&
       (data.quoted_price / data.price_low) < 0.80);
 
-  const isOverpriced = data.verdict === 'ripoff' ||
-    (data.quoted_price && data.price_average && data.price_average > 0 &&
-      (data.quoted_price - data.price_average) / data.price_average >= 0.25);
-
-  const isHigh = isOverpriced || data.verdict === 'high';
+  const tier = getTier(data);
+  const isOverpriced = tier ? tier === 'ripoff' : data.verdict === 'ripoff';
+  const isHigh = tier
+    ? (tier === 'high' || tier === 'ripoff')
+    : (data.verdict === 'high' || data.verdict === 'ripoff');
 
   return (
     <div className="w-full py-8 sm:py-12">
@@ -183,7 +183,7 @@ export default function Results() {
       <div className="space-y-6">
         <VerdictCard data={data} />
 
-        <BullshitMeter score={data.bs_meter} reasoning={data.bs_meter_reasoning} />
+        <BullshitMeter score={consistentMeterScore(data)} reasoning={data.bs_meter_reasoning} />
 
         {/* ACTION BUTTONS — overpriced/high quotes */}
         {isHigh && hasCoverage === true && (

@@ -96,7 +96,7 @@ function getAnalysis(data) {
     return { config: FAIR_CONFIG, pctLabel: pct > 0 ? `${pct}% below average` : null };
   }
   // Above average — check both avg and high thresholds, take the worse tier
-  if (pctAboveAvg >= 0.25 || pctAboveHigh >= 0.25) {
+  if (pctAboveHigh >= 0.25) {
     const pct = Math.round(Math.max(pctAboveAvg, pctAboveHigh) * 100);
     const base = pctAboveAvg >= pctAboveHigh ? 'average' : 'market high';
     return { config: RIPOFF_CONFIG, pctLabel: `${Math.round(pctAboveAvg * 100)}% above average / ${Math.round(Math.max(0, pctAboveHigh) * 100)}% above market high` };
@@ -107,6 +107,29 @@ function getAnalysis(data) {
   }
   const pct = Math.round(pctAboveHigh * 100);
   return { config: HIGH_CONFIG, pctLabel: `${pct}% above market high` };
+}
+
+// Which tier the saved numbers put this quote in. Null if any price is missing.
+export function getTier(data) {
+  if (!data?.quoted_price || !data?.price_low || !data?.price_average || !data?.price_high) return null;
+  const { config } = getAnalysis(data);
+  if (config === SUSPICIOUS_CONFIG) return "suspicious";
+  if (config === GREAT_DEAL_CONFIG) return "great";
+  if (config === FAIR_CONFIG) return "fair";
+  if (config === MARKET_RATE_CONFIG) return "market";
+  if (config === HIGH_CONFIG) return "high";
+  return "ripoff";
+}
+
+// Keeps the BS meter score in the same band as the verdict card so the two never disagree.
+const METER_BANDS = { great: [1, 2], fair: [1, 3], market: [4, 6], high: [7, 8], ripoff: [9, 10], suspicious: [5, 5] };
+export function consistentMeterScore(data) {
+  const tier = getTier(data);
+  if (!tier) return data?.bs_meter;
+  const [lo, hi] = METER_BANDS[tier];
+  const ai = Number(data.bs_meter);
+  const score = Number.isFinite(ai) ? Math.round(ai) : lo;
+  return Math.min(hi, Math.max(lo, score));
 }
 
 export default function VerdictCard({ data }) {

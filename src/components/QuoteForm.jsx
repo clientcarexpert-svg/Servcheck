@@ -786,6 +786,8 @@ ${form.estimate_only ? 'No quote provided — set verdict to "fair", provide mar
 
 ADDITIONAL RULES:
 - HIGH-VARIANCE CHECK: ${highVarianceNote || "Check if premium sub-variants exist for this car (e.g. air suspension, run-flat tyres, M-sport, AMG). If so, set high_variance_caveat. Otherwise leave it empty."}
+- For every service type: if the quote does not say which brand, parts quality or variant is used, widen the range so price_low is budget or aftermarket parts at an independent mechanic and price_high is premium or genuine parts at a dealership. This overrides the 35-40% limit in STEP 6 (allow up to 80% above price_low when parts quality is unknown). State the assumption in high_variance_caveat.
+- bs_meter must match the verdict: fair or great_deal = 1-3, market_rate = 4-6, high = 7-8, ripoff = 9-10.
 ${premiumBrandNote || ""}
 - Dealerships charge 25–40% more than independents on standard brands, but 50-60% more on premium brands (BMW, Mercedes, Audi, Porsche, etc.). Parts markup above 50% is excessive.
 - For counter_offer: use Sparesbox/Repco parts cost + fair local labour rate.
