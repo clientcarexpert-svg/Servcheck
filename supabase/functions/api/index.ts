@@ -1,18 +1,16 @@
-// ============================================================================
-// Supabase Edge Function: api
-// One router for the ported Base44 backend functions. The client shim sends
-// { fn: "<base44 function name>", payload: {...} }.
-// Credits only ever change here (service role), never from the browser.
-// ============================================================================
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { stripeHandlers } from './stripe.ts';
+import { aiHandlers } from './ai.ts';
+import { HttpError } from './errors.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-const REFERRAL_BONUS = 5;       // new user who enters a code
-const REFERRER_BONUS = 5;       // person who owns the code
+const REFERRAL_BONUS = 5;
+const REFERRER_BONUS = 5;
 const HOMESCREEN_BONUS = 5;
+const SIGNUP_BONUS = 5;
 const MAX_DEDUCT = 50;
 
 const cors = {
@@ -21,10 +19,6 @@ const cors = {
 };
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'content-type': 'application/json' } });
-
-class HttpError extends Error {
-  constructor(public status: number, message: string) { super(message); }
-}
 
 // deno-lint-ignore no-explicit-any
 type Ctx = { user: any; profile: any; admin: any; payload: any; req: Request };
@@ -39,9 +33,53 @@ const pick = (src: Record<string, unknown>, keys: string[]) =>
   Object.fromEntries(keys.filter((k) => src && k in src).map((k) => [k, src[k]]));
 const requireAdmin = (c: Ctx) => { if (c.profile?.role !== 'admin') throw new HttpError(403, 'admin only'); };
 
+// ---- suburb coordinates (from the public postcode table) ----
+const norm = (s: unknown) => String(s ?? '').trim().toLowerCase();
+const validPostcode = (p: unknown) => /^\d{4}$/.test(String(p ?? '')) && !String(p).startsWith('1');
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const r = (d: number) => (d * Math.PI) / 180;
+  const a = Math.sin(r(lat2 - lat1) / 2) ** 2 + Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(r(lon2 - lon1) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(a));
+}
+
+// deno-lint-ignore no-explicit-any
+async function loadSuburbRows(admin: any, postcodes: unknown[]) {
+  const pcs = [...new Set(postcodes.map(String).filter(validPostcode))];
+  if (!pcs.length) return [];
+  const { data } = await admin.from('suburbs').select('postcode, locality, state, lat, lon').in('postcode', pcs);
+  return data ?? [];
+}
+
+// deno-lint-ignore no-explicit-any
+function coordsFor(rows: any[], postcode: unknown, suburb: unknown) {
+  const inPc = rows.filter((r) => r.postcode === String(postcode));
+  if (!inPc.length) return null;
+  const exact = inPc.find((r) => norm(r.locality) === norm(suburb));
+  if (exact) return { lat: exact.lat, lon: exact.lon };
+  const lat = inPc.reduce((s, r) => s + r.lat, 0) / inPc.length;
+  const lon = inPc.reduce((s, r) => s + r.lon, 0) / inPc.length;
+  return { lat, lon };
+}
+
 const handlers: Record<string, (c: Ctx) => Promise<unknown>> = {
+  ...stripeHandlers,
+  ...aiHandlers,
+
   async getCredits(c) {
-    return { credits: Number(c.profile.credits ?? 0) };
+    // First account per device gets the signup bonus once. Later accounts on the same device get 0.
+    const ip = c.req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+    const device = typeof c.payload.device_id === 'string' ? c.payload.device_id : null;
+    const { data: claim, error } = await c.admin.rpc('claim_signup_bonus', {
+      p_user: c.user.id, p_email: c.profile.email, p_device: device, p_ip: ip, p_amount: SIGNUP_BONUS,
+    });
+    if (error) console.error('claim_signup_bonus failed:', error.message);
+    let credits = Number(c.profile.credits ?? 0);
+    if (claim?.granted && !claim?.already) {
+      const { data: p } = await c.admin.from('profiles').select('credits').eq('id', c.user.id).single();
+      credits = Number(p?.credits ?? credits);
+    }
+    return { credits, signup_bonus_granted: !!(claim?.granted && !claim?.already) };
   },
 
   async deductCredits(c) {
@@ -86,7 +124,7 @@ const handlers: Record<string, (c: Ctx) => Promise<unknown>> = {
       const { data, error } = await c.admin.from('profiles').update({ invite_code: code })
         .eq('id', c.user.id).is('invite_code', null).select('invite_code').maybeSingle();
       if (!error && data) return { invite_code: data.invite_code };
-      if (!error && !data) { // someone set it in parallel
+      if (!error && !data) {
         const { data: p } = await c.admin.from('profiles').select('invite_code').eq('id', c.user.id).single();
         return { invite_code: p?.invite_code };
       }
@@ -102,7 +140,6 @@ const handlers: Record<string, (c: Ctx) => Promise<unknown>> = {
       .ilike('invite_code', code.replace(/[%_]/g, '')).maybeSingle();
     if (!referrer) return { success: false, error: 'That code is not valid.' };
     if (referrer.id === c.user.id) return { success: false, error: 'You cannot use your own code.' };
-    // claim flag first: only one request can win
     const { data: won } = await c.admin.from('profiles').update({ referral_claimed: true })
       .eq('id', c.user.id).eq('referral_claimed', false).select('id').maybeSingle();
     if (!won) return { success: false, error: 'You have already used a code.' };
@@ -154,7 +191,7 @@ const handlers: Record<string, (c: Ctx) => Promise<unknown>> = {
   async setUserRole(c) {
     const role = c.payload.role;
     if (role !== 'mechanic' && role !== 'mobile_mechanic') throw new HttpError(403, 'role not allowed');
-    if (c.profile.role === 'admin') return { success: true, role: 'admin' }; // never demote
+    if (c.profile.role === 'admin') return { success: true, role: 'admin' };
     await c.admin.from('profiles').update({ role }).eq('id', c.user.id);
     return { success: true, role };
   },
@@ -184,13 +221,78 @@ const handlers: Record<string, (c: Ctx) => Promise<unknown>> = {
     return { profile: data };
   },
 
+  // Admin approves or rejects a mechanic's verification.
+  async approveMechanicVerification(c) {
+    requireAdmin(c);
+    const { profile_id, action, notes } = c.payload;
+    if (action !== 'approve' && action !== 'reject') throw new HttpError(400, 'action must be approve or reject');
+    const approved = action === 'approve';
+    const cleanNotes = typeof notes === 'string' ? notes.slice(0, 2000) : null;
+    const upd: Record<string, unknown> = {
+      verification_status: approved ? 'verified' : 'rejected',
+      verification_notes: cleanNotes,
+    };
+    if (approved) upd.is_active = true;
+    const { data, error } = await c.admin.from('mechanic_profiles').update(upd).eq('id', profile_id).select('id, user_email, business_name').maybeSingle();
+    if (error) throw new HttpError(400, error.message);
+    if (!data) throw new HttpError(404, 'mechanic profile not found');
+    // Best effort in-app notification. Never fail the approval because of this.
+    const { error: nErr } = await c.admin.from('mechanic_notifications').insert({
+      mechanic_profile_id: String(data.id),
+      created_by: c.profile.email,
+      type: approved ? 'verification_approved' : 'verification_rejected',
+      title: approved ? 'You are verified' : 'Verification not approved',
+      message: approved
+        ? 'Your ServCheck mechanic profile is verified and now visible to customers.'
+        : 'Your verification was not approved.' + (cleanNotes ? ' Reason: ' + cleanNotes : ' Please update your details and resubmit.'),
+    });
+    if (nErr) console.error('notification insert failed:', nErr.message);
+    return { success: true, verification_status: upd.verification_status };
+  },
+
+  // Turn a postcode (and optional suburb) into coordinates, using the suburbs table. No external geocoder.
+  async lookupSuburb(c) {
+    const { postcode, suburb, state } = c.payload;
+    if (validPostcode(postcode)) {
+      const rows = await loadSuburbRows(c.admin, [postcode]);
+      const hit = coordsFor(rows, postcode, suburb);
+      if (hit) return { found: true, ...hit, postcode: String(postcode) };
+    }
+    const name = String(suburb ?? '').trim().replace(/[%_]/g, '');
+    if (name.length >= 2) {
+      let q = c.admin.from('suburbs').select('postcode, locality, state, lat, lon').ilike('locality', name).not('postcode', 'like', '1%');
+      if (state) q = q.eq('state', String(state).toUpperCase());
+      const { data } = await q.limit(1);
+      if (data?.length) return { found: true, lat: data[0].lat, lon: data[0].lon, postcode: data[0].postcode };
+    }
+    return { found: false };
+  },
+
   async getPublicMechanics(c) {
     let q = c.admin.from('mechanic_profiles')
       .select('id, business_name, mechanic_type, suburb, postcode, state, bio, specialties, service_radius_km, subscription_tier, accepting_bookings')
       .eq('is_active', true).eq('verification_status', 'verified');
     if (c.payload.state) q = q.eq('state', c.payload.state);
     const { data } = await q.limit(500);
-    return { mechanics: data ?? [] };
+    const list = data ?? [];
+    const rows = await loadSuburbRows(c.admin, list.map((m: { postcode: unknown }) => m.postcode));
+    const oLat = Number(c.payload.origin_lat);
+    const oLon = Number(c.payload.origin_lon);
+    const hasOrigin = Number.isFinite(oLat) && Number.isFinite(oLon) && c.payload.origin_lat !== null && c.payload.origin_lon !== null;
+    const mechanics = list.map((m: { postcode: unknown; suburb: unknown }) => {
+      const pt = coordsFor(rows, m.postcode, m.suburb);
+      return {
+        ...m,
+        lat: pt?.lat ?? null,
+        lon: pt?.lon ?? null,
+        distance_km: pt && hasOrigin ? Math.round(haversineKm(oLat, oLon, pt.lat, pt.lon) * 10) / 10 : null,
+      };
+    });
+    if (hasOrigin) {
+      mechanics.sort((a: { distance_km: number | null }, b: { distance_km: number | null }) =>
+        (a.distance_km ?? 1e9) - (b.distance_km ?? 1e9));
+    }
+    return { mechanics };
   },
 
   async getVerificationDocUrl(c) {
@@ -238,7 +340,7 @@ Deno.serve(async (req) => {
 
     return json(await handler({ user, profile, admin, payload: body.payload ?? {}, req }));
   } catch (e) {
-    if (e instanceof HttpError) return json({ error: e.message }, e.status);
+    if (e instanceof HttpError) return json({ error: e.message, ...e.extra }, e.status);
     console.error('api error:', e);
     return json({ error: 'internal error' }, 500);
   }

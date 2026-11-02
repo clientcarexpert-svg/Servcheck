@@ -1,17 +1,3 @@
-// ============================================================================
-// Supabase Edge Function: invoke-llm
-// Replaces Base44's InvokeLLM + ExtractDataFromUploadedFile
-//
-// Deploy:  supabase functions deploy invoke-llm
-// Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-//
-// Modes:
-//   mode:"llm"     -> text-only prompt to Claude. Files are NEVER forwarded.
-//   mode:"extract" -> reads the uploaded file server-side from the private
-//                     bucket, extracts ONLY the fields in json_schema, and
-//                     scrubs PII patterns before returning. The raw file never
-//                     reaches the browser-side LLM path.
-// ============================================================================
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
@@ -19,20 +5,22 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-// Only these models can be requested. Anything else (e.g. old Base44 names like
-// "gemini_3_flash") falls back to the cheap default. Stops cost abuse.
 const ALLOWED_MODELS = ['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6'];
 const DEFAULT_MODEL = 'claude-haiku-5-5';
-const MAX_PROMPT_CHARS = 20000;
+const SEARCH_MODEL = 'claude-sonnet-5-5';
+const MAX_PROMPT_CHARS = 40000;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_FILES = 4;
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Defence in depth: strip emails/AU phone numbers that leak into free text.
-// The json_schema already limits what comes back; this catches the rest.
+const PII_RULE =
+  'Never output personal names, email addresses, phone numbers, street addresses or vehicle registration plates. ' +
+  'Workshop or business names are allowed.';
+
 function scrubPII(obj: unknown): unknown {
   if (typeof obj === 'string') {
     return obj
@@ -60,10 +48,57 @@ async function callClaude(body: Record<string, unknown>) {
   return res.json();
 }
 
+// deno-lint-ignore no-explicit-any
+function allText(result: any): string {
+  return (result.content ?? [])
+    .filter((c: { type: string }) => c.type === 'text')
+    .map((c: { text: string }) => c.text)
+    .join('\n');
+}
+
+function parseJson(text: string) {
+  const s = text.indexOf('{');
+  const e = text.lastIndexOf('}');
+  if (s < 0 || e < s) throw new Error('model did not return JSON');
+  return JSON.parse(text.slice(s, e + 1));
+}
+
+function toBase64(bytes: Uint8Array) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
+}
+
+const IMAGE_TYPES: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+};
+
+// Download the user's own uploaded files and turn them into Claude content blocks.
+// deno-lint-ignore no-explicit-any
+async function fileBlocks(admin: any, userId: string, paths: unknown[]) {
+  // deno-lint-ignore no-explicit-any
+  const blocks: any[] = [];
+  for (const p of paths.slice(0, MAX_FILES)) {
+    const path = String(p ?? '');
+    if (!path.startsWith(`${userId}/`) || path.includes('..')) throw new Error('forbidden file');
+    const { data: blob, error } = await admin.storage.from('uploads').download(path);
+    if (error || !blob) throw new Error('could not read file');
+    if (blob.size > MAX_FILE_BYTES) throw new Error('file too large');
+    const ext = path.toLowerCase().split('.').pop() ?? '';
+    const b64 = toBase64(new Uint8Array(await blob.arrayBuffer()));
+    if (ext === 'pdf') {
+      blocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } });
+    } else {
+      const mt = IMAGE_TYPES[ext] ?? (Object.values(IMAGE_TYPES).includes(blob.type) ? blob.type : 'image/jpeg');
+      blocks.push({ type: 'image', source: { type: 'base64', media_type: mt, data: b64 } });
+    }
+  }
+  return blocks;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
-  // Require an authenticated Supabase user
   const authHeader = req.headers.get('Authorization') ?? '';
   const userClient = createClient(SUPABASE_URL, ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
@@ -74,16 +109,14 @@ Deno.serve(async (req) => {
       { status: 401, headers: cors });
   }
 
-  const { mode, prompt, response_json_schema, json_schema, storage_path, model } =
+  const { mode, prompt, response_json_schema, json_schema, storage_path, storage_paths, model, add_context_from_internet } =
     await req.json();
 
   try {
     if (mode === 'extract') {
-      // Only allow reading files in the caller's own folder
       if (typeof storage_path !== 'string' || !storage_path.startsWith(`${user.id}/`)) {
         return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: cors });
       }
-      // Read the file with the service role (private bucket) — server side only
       const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
       const { data: blob, error } = await admin.storage.from('uploads').download(storage_path);
       if (error) throw error;
@@ -92,9 +125,7 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'file too large' }), { status: 413, headers: cors });
       }
       const bytes = new Uint8Array(await blob.arrayBuffer());
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-      const b64 = btoa(binary);
+      const b64 = toBase64(bytes);
       const isPdf = storage_path.toLowerCase().endsWith('.pdf');
 
       const result = await callClaude({
@@ -126,20 +157,68 @@ Deno.serve(async (req) => {
     if (typeof prompt !== 'string' || prompt.length === 0 || prompt.length > MAX_PROMPT_CHARS) {
       return new Response(JSON.stringify({ error: 'invalid prompt' }), { status: 400, headers: cors });
     }
-    // mode === "llm" — text only. Files are never accepted here.
-    const result = await callClaude({
-      model: typeof model === 'string' && ALLOWED_MODELS.includes(model) ? model : DEFAULT_MODEL,
-      max_tokens: 4000,
-      system: response_json_schema
-        ? `Respond with raw JSON only matching this schema, no markdown fences:\n${JSON.stringify(response_json_schema)}`
-        : 'You are a helpful assistant.',
-      messages: [{ role: 'user', content: prompt }],
-    });
 
-    const text = result.content?.find((c: { type: string }) => c.type === 'text')?.text ?? '';
-    const payload = response_json_schema
-      ? JSON.parse(text.replace(/```json|```/g, '').trim())
-      : text;
+    const hasFiles = Array.isArray(storage_paths) && storage_paths.length > 0;
+    // deno-lint-ignore no-explicit-any
+    let userContent: any = prompt;
+    if (hasFiles) {
+      const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+      const blocks = await fileBlocks(admin, user.id, storage_paths);
+      userContent = [...blocks, { type: 'text', text: prompt }];
+    }
+
+    const wantsSearch = !!add_context_from_internet && !hasFiles;
+    const chosenModel = wantsSearch
+      ? SEARCH_MODEL
+      : hasFiles
+        ? (typeof model === 'string' && ALLOWED_MODELS.includes(model) ? model : SEARCH_MODEL)
+        : (typeof model === 'string' && ALLOWED_MODELS.includes(model) ? model : DEFAULT_MODEL);
+
+    const schemaText = response_json_schema
+      ? `Respond with raw JSON only matching this schema, no markdown fences, no text before or after the JSON:\n${JSON.stringify(response_json_schema)}`
+      : 'You are a helpful assistant.';
+    const priceRule =
+      '\nIMPORTANT: Always give a real number for every price field you are asked for. Never return null or zero for prices. ' +
+      'If you cannot find a live price, give your best realistic Australian market estimate in AUD from your own knowledge.';
+    const needsPrices = !!response_json_schema?.properties?.price_average;
+
+    // deno-lint-ignore no-explicit-any
+    const run = async (useSearch: boolean): Promise<any> => {
+      const result = await callClaude({
+        model: chosenModel,
+        max_tokens: 6000,
+        system: schemaText + (needsPrices ? priceRule : '') +
+          (hasFiles ? `\nThe attached file(s) were uploaded by the user. Only report what is actually visible. ${PII_RULE}` : '') +
+          (wantsSearch && !useSearch ? '\nLive web search is unavailable, so use your own knowledge of current Australian prices.' : ''),
+        messages: [{ role: 'user', content: userContent }],
+        ...(useSearch ? {
+          tools: [{
+            type: 'web_search_20250305', name: 'web_search', max_uses: 5,
+            user_location: { type: 'approximate', country: 'AU' },
+          }],
+        } : {}),
+      });
+      const text = allText(result);
+      if (!response_json_schema) return text;
+      const parsed = parseJson(text);
+      return hasFiles ? scrubPII(parsed) : parsed;
+    };
+
+    const valid = (out: unknown) => {
+      if (!needsPrices) return true;
+      const o = out as Record<string, unknown>;
+      return Number(o?.price_average) > 0 && Number(o?.price_low) > 0 && Number(o?.price_high) > 0;
+    };
+
+    let payload;
+    try {
+      payload = await run(wantsSearch);
+      if (!valid(payload)) throw new Error('missing prices');
+    } catch (e) {
+      console.error('first attempt failed, retrying without search:', String(e));
+      payload = await run(false);
+      if (!valid(payload)) throw new Error('model returned no prices');
+    }
 
     return new Response(JSON.stringify(payload),
       { headers: { ...cors, 'content-type': 'application/json' } });
