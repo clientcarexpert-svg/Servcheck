@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -7,6 +9,13 @@ import DiagnosisResult from "@/components/SymptomChecker/DiagnosisResult";
 import { deductCredit, refundCredit, CREDITS_PER_CHECK } from "@/lib/credits";
 
 export default function SymptomChecker() {
+  const navigate = useNavigate();
+  const { user, isLoadingAuth } = useAuth();
+  const isMechanicUser = user?.role === "mechanic" || user?.role === "mobile_mechanic";
+  // Mechanics must never see the consumer tools
+  useEffect(() => {
+    if (!isLoadingAuth && isMechanicUser) navigate("/mechanic-portal", { replace: true });
+  }, [isLoadingAuth, isMechanicUser]);
   const [loading, setLoading] = useState(false);
   const [diagnosis, setDiagnosis] = useState(null);
   const [carDetails, setCarDetails] = useState(null);
@@ -43,6 +52,8 @@ export default function SymptomChecker() {
       setLoading(false);
     }
   };
+
+  if (isMechanicUser) return null;
 
   return (
     <div className="min-h-screen bg-[#F8F9FB]">

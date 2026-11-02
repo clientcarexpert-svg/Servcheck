@@ -12,12 +12,12 @@ export default function CheckQuote() {
 
   // Mechanics should not access the consumer quote checker
   useEffect(() => {
-    if (!isLoadingAuth && user?.role === "mechanic") {
+    if (!isLoadingAuth && (user?.role === "mechanic" || user?.role === "mobile_mechanic")) {
       navigate("/mechanic-portal", { replace: true });
     }
   }, [user, isLoadingAuth]);
 
-  if (!isLoadingAuth && user?.role === "mechanic") return null;
+  if (!isLoadingAuth && (user?.role === "mechanic" || user?.role === "mobile_mechanic")) return null;
 
   return (
     <>

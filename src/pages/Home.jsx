@@ -8,7 +8,7 @@ export default function Home() {
   const { user } = useAuth();
 
   let page;
-  if (user?.role === "mechanic") page = <MechanicHome />;
+  if (user?.role === "mechanic" || user?.role === "mobile_mechanic") page = <MechanicHome />;
   else if (user) page = <LoggedInHome />;
   else page = <CustomerHome />;
 

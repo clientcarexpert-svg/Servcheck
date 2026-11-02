@@ -112,9 +112,8 @@ export default function Layout() {
   }, []);
 
   const isGuest = !user;
-  // Treat anyone on mechanic-portal as a mechanic (safety net if role didn't sync yet)
-  const isOnMechanicRoute = location.pathname.startsWith('/mechanic-portal');
-  const isMechanic = user?.role === 'mechanic' || user?.role === 'mobile_mechanic' || (!!user && isOnMechanicRoute);
+  // Portal is decided ONLY by the account role, never by which page is open
+  const isMechanic = user?.role === 'mechanic' || user?.role === 'mobile_mechanic';
   const isDealer = user?.role === 'dealer';
   const isAdmin = user?.role === 'admin';
   const isRegularUser = !isMechanic && !isDealer && !isAdmin && user;
