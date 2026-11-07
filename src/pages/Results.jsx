@@ -460,7 +460,7 @@ export default function Results() {
 
         {/* Disclaimer — quiet but accessible */}
         <SubtleDisclaimer>
-          Market estimate only. Prices are based on Australian market data and may vary by vehicle condition, location and
+          Market estimate only. Prices are estimates of typical Australian prices and may vary by vehicle condition, location and
           provider. This report is general information, not professional mechanical or financial advice. Always obtain a
           written quote from a licensed mechanic before authorising any work.
         </SubtleDisclaimer>

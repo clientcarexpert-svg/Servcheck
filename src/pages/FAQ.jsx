@@ -14,15 +14,15 @@ const FAQS = [
       },
       {
         q: "Why does ServCheck exist?",
-        a: "Because the Australian car repair industry has a transparency problem. Quotes for the same job can vary by hundreds — sometimes thousands — of dollars between workshops in the same suburb. Most drivers have no way to tell if they're being charged a fair price or getting taken for a ride. ServCheck was built to level that playing field — giving drivers the same pricing intelligence and market data that the trade has always had to itself.",
+        a: "Because the Australian car repair industry has a transparency problem. Quotes for the same job can vary by hundreds — sometimes thousands — of dollars between workshops in the same suburb. Most drivers have no easy way to tell if a quote is in the typical range. ServCheck was built to give drivers a clearer idea of typical prices before they agree to work.",
       },
       {
         q: "How does ServCheck work?",
-        a: "It's simple. Enter your car's make, model, year, and the service or repair you've been quoted for. Our pricing engine analyses your quote against real market data — community-submitted prices, cached workshop rates, advertised franchise prices, and parts retail data — and gives you a clear verdict: Fair, High, or Ripoff. You also get a price range for what the job should cost, a Market Variance Indicator score, and the option to request quotes directly from verified local mechanics.",
+        a: "It's simple. Enter your car's make, model, year, and the service or repair you've been quoted for. ServCheck compares your quote against an estimate of typical Australian prices for that job and shows where it sits: Fair, High, or Well Above Typical Range. You also get an estimated price range, a Market Variance Indicator score, and the option to request quotes directly from verified local mechanics.",
       },
       {
         q: "What does ServCheck offer?",
-        a: "ServCheck is a complete car ownership toolkit: 1) Quote Check — instant independent pricing analysis of any mechanic quote. 2) Digital Logbook — track every service, part, and reminder in one place. 3) Car Buyer Check — market-verified valuation before you buy a used car, so you don't overpay. 4) Equity Meter — live market value for your current car. 5) Mechanic Directory — find verified, community-rated workshops near you. 6) Mobile Mechanic Quotes — request quotes from mobile mechanics that come to you. 7) Community Prices — see what other Aussies are paying for the same job in your suburb.",
+        a: "ServCheck is a complete car ownership toolkit: 1) Quote Check — an instant estimate of typical prices for any mechanic quote. 2) Digital Logbook — track every service, part, and reminder in one place. 3) Car Buyer Check — estimated valuation and checklist before you buy a used car, so you don't overpay. 4) Equity Meter — estimated market value for your current car. 5) Mechanic Directory — find verified workshops near you. 6) Mobile Mechanic Quotes — request quotes from mobile mechanics that come to you. 7) Community Prices — see what other Aussies are paying for the same job in your suburb.",
       },
       {
         q: "Who is ServCheck for?",
@@ -42,7 +42,7 @@ const FAQS = [
       },
       {
         q: "Who built ServCheck?",
-        a: "ServCheck was built in Australia by a small independent team who got sick of watching friends, family, and themselves get overcharged on car repairs. We're not a workshop chain. We're not owned by an insurer or a dealer group. We're a consumer-side tool — built for drivers, funded by drivers (through subscriptions and credits), and accountable to drivers.",
+        a: "ServCheck was built in Australia by a small independent Australian business that wanted to make car repair costs easier to understand. We're not a workshop chain. We're not owned by an insurer or a dealer group. We're a consumer-side tool — built for drivers, funded by drivers (through subscriptions and credits), and accountable to drivers.",
       },
       {
         q: "How do I get in touch?",
@@ -55,7 +55,7 @@ const FAQS = [
     questions: [
       {
         q: "How accurate is the quote analysis?",
-        a: "Our analysis draws from a combination of real community-submitted prices, cached market data, and real-time pricing intelligence. Results are indicative and based on typical Australian market rates for your car make, model, and location. Individual prices can vary based on complexity, parts brand, and workshop quality.",
+        a: "Our estimates are based on typical Australian price ranges for your car make, model, and location. Results are indicative only. Individual prices can vary based on complexity, parts brand, and workshop quality.",
       },
       {
         q: "What services can I check?",
@@ -67,7 +67,7 @@ const FAQS = [
       },
       {
         q: "What do the verdicts mean?",
-        a: "'Fair' means the quote is within the typical price range for your car and location. 'High' means the price is above average but not outrageous. 'Ripoff' means the quote is significantly above market rate and you should seek a second opinion.",
+        a: "'Fair' means the quote is within the typical price range for your car and location. 'High' means the price is above average. 'Well Above Typical Range' means the quote is significantly above the typical range, so you may want to ask for a breakdown or get a second quote.",
       },
       {
         q: "What is the Market Variance Indicator?",

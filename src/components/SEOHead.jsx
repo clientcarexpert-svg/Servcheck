@@ -220,7 +220,7 @@ export const HOWTO_SCHEMA = {
   "step": [
     { "@type": "HowToStep", "position": "1", "name": "Enter Your Quote", "text": "Type in the services and prices from your mechanic's quote." },
     { "@type": "HowToStep", "position": "2", "name": "Add Your Car Details", "text": "Enter your car's make, model, year, and your suburb or postcode." },
-    { "@type": "HowToStep", "position": "3", "name": "Get Your Verdict", "text": "ServCheck compares your quote against real Australian pricing data and tells you if it's fair, high, or a rip-off." }
+    { "@type": "HowToStep", "position": "3", "name": "Get Your Verdict", "text": "ServCheck compares your quote against typical Australian price ranges and shows if it looks fair, high, or well above the range." }
   ]
 };
 
@@ -231,7 +231,7 @@ export const QUOTE_FAQ_SCHEMA = {
     {
       "@type": "Question",
       "name": "How do I know if my mechanic is overcharging me?",
-      "acceptedAnswer": { "@type": "Answer", "text": "ServCheck compares your quote against real pricing data from Australian mechanics. If your quote is higher than the local average for your car type and service, we flag it instantly." }
+      "acceptedAnswer": { "@type": "Answer", "text": "ServCheck compares your quote against estimated typical Australian price ranges. If your quote is higher than the typical range for your car type and service, we show you." }
     },
     {
       "@type": "Question",

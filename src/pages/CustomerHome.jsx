@@ -34,7 +34,7 @@ export default function CustomerHome() {
     <div className="min-h-screen bg-[#F8F9FB]">
       <SEOHead
         title="ServCheck — Is Your Mechanic Quote Fair? | Australia's Car Service Checker"
-        description="Check if your mechanic is overcharging you. ServCheck analyses quotes, tracks your car's service history, and connects you with trusted Australian mechanics."
+        description="Check if your mechanic's quote is within the typical range. ServCheck analyses quotes, tracks your car's service history, and connects you with trusted Australian mechanics."
         path="/"
         schema={HOME_SCHEMA}
       />

@@ -1,7 +1,7 @@
 import { TrendingDown, TrendingUp, Minus, Info, CheckCircle2, AlertTriangle, XOctagon } from "lucide-react";
 
 const VERDICT_CONFIG = {
-  ripoff: { label: "Overpriced", cls: "bg-red-100 text-red-700 border-red-200", Icon: XOctagon },
+  ripoff: { label: "Well Above Typical Range", cls: "bg-red-100 text-red-700 border-red-200", Icon: XOctagon },
   high: { label: "Above market", cls: "bg-orange-100 text-orange-700 border-orange-200", Icon: AlertTriangle },
   fair: { label: "Fair", cls: "bg-emerald-100 text-emerald-700 border-emerald-200", Icon: CheckCircle2 },
   great_deal: { label: "Great deal", cls: "bg-blue-100 text-blue-700 border-blue-200", Icon: CheckCircle2 },

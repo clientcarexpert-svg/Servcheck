@@ -4,7 +4,7 @@
 
 ## What ServCheck does
 
-- Quote Check: Enter a mechanic's quote (service type, car make/model/year, suburb) and get an instant verdict — fair, high, or overpriced — compared against typical Australian pricing for that exact car and region.
+- Quote Check: Enter a mechanic's quote (service type, car make/model/year, suburb) and get an instant verdict — fair, high, or well above the typical range — compared against typical Australian pricing for that exact car and region.
 - Symptom Checker: Answer guided questions about a car problem (won't start, warning lights, noises, brakes, leaks, electrical) and get ranked likely causes with typical AUD repair cost ranges.
 - Used Car Check: Enter a used car's details and asking price to get a market price verdict, upcoming maintenance cost forecast, red flags, and a pre-purchase inspection checklist.
 - Digital Logbook: Free service history tracker with receipt scanning, next-service-due reminders, and a maintenance-based Car Health Score.

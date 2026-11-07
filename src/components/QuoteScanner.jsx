@@ -65,7 +65,7 @@ PRICING RULES:
 - Factor in realistic Australian labour rates for the suburb/state.
 - BS meter (1-10) should reflect suburb-specific pricing, not national average.
 
-For each line item: is the price fair, high, or a ripoff? Detect suspicious patterns.
+For each line item: is the price fair, high, or well above the typical range? Use neutral, factual language and never accuse a workshop of wrongdoing. Note any items worth asking about.
 Provide a summary verdict, note GST status, and an overall bs_meter score.`;
 
     const res = await base44.integrations.Core.InvokeLLM({
@@ -250,7 +250,7 @@ If it is a vehicle photo, also identify the car make, model and year if visible 
           </div>
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground leading-relaxed">Snap a photo of your quote or any vehicle damage — we instantly break down every line item and flag overcharges.</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">Snap a photo of your quote or any vehicle damage — we instantly break down every line item and highlight items above the typical range.</p>
       )}
 
       {damageData && !loading && (
@@ -305,7 +305,7 @@ If it is a vehicle photo, also identify the car make, model and year if visible 
 
             {/* BS Meter */}
             <div className="flex items-center gap-2 px-1">
-              <span className="text-xs font-medium text-muted-foreground w-20">BS Meter</span>
+              <span className="text-xs font-medium text-muted-foreground w-28">Variance Meter</span>
               <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width: `${(result.bs_meter / 10) * 100}%`, background: result.bs_meter >= 7 ? "#ef4444" : result.bs_meter >= 4 ? "#f59e0b" : "#22c55e" }} />
               </div>

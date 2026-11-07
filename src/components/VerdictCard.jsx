@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 const GREAT_DEAL_CONFIG = {
   icon: Star,
   label: "Great Deal",
-  sublabel: "Below typical market rate — good value",
+  sublabel: "Below the typical range. Good value",
   bg: "bg-emerald-50",
   border: "border-emerald-300",
   iconColor: "text-emerald-600",
@@ -26,8 +26,8 @@ const FAIR_CONFIG = {
 
 const MARKET_RATE_CONFIG = {
   icon: AlertTriangle,
-  label: "Market Rate",
-  sublabel: "Above average — you may be able to negotiate",
+  label: "Upper End of Range",
+  sublabel: "Above average but within the typical range. You can ask for a breakdown",
   bg: "bg-yellow-50",
   border: "border-yellow-300",
   iconColor: "text-yellow-600",
@@ -37,8 +37,8 @@ const MARKET_RATE_CONFIG = {
 
 const HIGH_CONFIG = {
   icon: AlertTriangle,
-  label: "Above Market Rate",
-  sublabel: "Over 10% above the high end — push back on this",
+  label: "Above Typical Range",
+  sublabel: "Above the high end of the typical range. You may want to ask what is included",
   bg: "bg-orange-50",
   border: "border-orange-300",
   iconColor: "text-orange-600",
@@ -48,8 +48,8 @@ const HIGH_CONFIG = {
 
 const RIPOFF_CONFIG = {
   icon: XOctagon,
-  label: "Significantly Overpriced",
-  sublabel: "Over 25% above the high end — consider getting a second opinion",
+  label: "Well Above Typical Range",
+  sublabel: "Over 25% above the high end. Consider asking for an itemised breakdown or a second quote",
   bg: "bg-red-50",
   border: "border-red-300",
   iconColor: "text-red-600",
@@ -59,8 +59,8 @@ const RIPOFF_CONFIG = {
 
 const SUSPICIOUS_CONFIG = {
   icon: ShieldAlert,
-  label: "Suspiciously Cheap",
-  sublabel: "15%+ below market low — bait & switch or low-grade parts risk",
+  label: "Well Below Typical Range",
+  sublabel: "15%+ below the typical low. Ask what is included, such as parts brand and warranty",
   bg: "bg-orange-50",
   border: "border-orange-400",
   iconColor: "text-orange-600",
@@ -85,11 +85,11 @@ function getAnalysis(data) {
 
   if (pctBelowLow >= 0.15) {
     const pct = Math.round(pctBelowLow * 100);
-    return { config: SUSPICIOUS_CONFIG, pctLabel: `${pct}% below market low` };
+    return { config: SUSPICIOUS_CONFIG, pctLabel: `${pct}% below typical low` };
   }
   if (pctBelowLow > 0) {
     const pct = Math.round(pctBelowLow * 100);
-    return { config: GREAT_DEAL_CONFIG, pctLabel: `${pct}% below market low` };
+    return { config: GREAT_DEAL_CONFIG, pctLabel: `${pct}% below typical low` };
   }
   if (q <= avg) {
     const pct = Math.round(((avg - q) / avg) * 100);
@@ -99,14 +99,14 @@ function getAnalysis(data) {
   if (pctAboveHigh >= 0.25) {
     const pct = Math.round(Math.max(pctAboveAvg, pctAboveHigh) * 100);
     const base = pctAboveAvg >= pctAboveHigh ? 'average' : 'market high';
-    return { config: RIPOFF_CONFIG, pctLabel: `${Math.round(pctAboveAvg * 100)}% above average / ${Math.round(Math.max(0, pctAboveHigh) * 100)}% above market high` };
+    return { config: RIPOFF_CONFIG, pctLabel: `${Math.round(pctAboveAvg * 100)}% above average / ${Math.round(Math.max(0, pctAboveHigh) * 100)}% above typical high` };
   }
   if (q <= high) {
     const pct = Math.round(pctAboveAvg * 100);
     return { config: MARKET_RATE_CONFIG, pctLabel: `${pct}% above average` };
   }
   const pct = Math.round(pctAboveHigh * 100);
-  return { config: HIGH_CONFIG, pctLabel: `${pct}% above market high` };
+  return { config: HIGH_CONFIG, pctLabel: `${pct}% above typical high` };
 }
 
 // Which tier the saved numbers put this quote in. Null if any price is missing.
@@ -198,7 +198,7 @@ export default function VerdictCard({ data }) {
       {overcharge > 0 && (
         <div className="mt-4 bg-white/60 rounded-xl p-4 text-center">
           <p className={`font-heading text-lg font-bold ${config.textColor}`}>
-            Your quote is ${overcharge.toLocaleString()} above the average price
+            Your quote is ${overcharge.toLocaleString()} above the estimated average
           </p>
         </div>
       )}
@@ -214,7 +214,7 @@ export default function VerdictCard({ data }) {
       {isSuspicious && (
         <div className="mt-4 flex items-start gap-3 rounded-xl bg-orange-100 border border-orange-300 px-4 py-3">
           <ShieldAlert className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-orange-800 leading-relaxed">Quotes this far below market rate often indicate non-OEM parts, skipped steps, or a bait-and-switch. Ask for a parts brand guarantee in writing before proceeding.</p>
+          <p className="text-xs text-orange-800 leading-relaxed">A quote this far below the typical range can have many reasons, such as different parts, a different scope of work or a special deal. Ask what is included, and get the parts brand and warranty in writing before proceeding.</p>
         </div>
       )}
 
@@ -251,14 +251,14 @@ export default function VerdictCard({ data }) {
 
       {/* Data source note */}
       <p className="mt-4 text-[11px] text-slate-400 text-center italic">
-        Based on current Australian market pricing from verified automotive service providers across your state. Updated in real time.
+        Estimated typical price range for this work in Australia. It is not live pricing and is not based on quotes from any specific workshop.
       </p>
 
       {/* ACCC Compliance Disclaimer */}
       <div className="mt-3 flex items-start gap-2 rounded-xl bg-white/70 border border-slate-200 px-4 py-3">
         <Info className="h-3.5 w-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
         <p className="text-[11px] text-slate-500 leading-relaxed">
-          <strong className="text-slate-600">Estimate only.</strong> This result is based on independent pricing analysis using aggregated Australian market data and is not a definitive mechanical assessment. Prices vary based on your vehicle's specific condition, parts availability, and location. Always obtain a written quote from a licensed mechanic before authorising any work.
+          <strong className="text-slate-600">Estimate only.</strong> This result is an estimate of typical Australian prices. It is not a definitive mechanical assessment and is not a judgement about any workshop. Prices vary based on your vehicle's specific condition, parts availability, and location. Always obtain a written quote from a licensed mechanic before authorising any work.
         </p>
       </div>
     </motion.div>

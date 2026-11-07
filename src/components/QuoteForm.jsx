@@ -394,7 +394,7 @@ const STEPS = ["Your Ride", "Engine & Variant", "Services", "The Quote"];
 
 const LOADING_MESSAGES = [
   "Checking Australian market rates...",
-  "Comparing against verified service providers in your area...",
+  "Estimating the typical price range for your area...",
   "Analysing pricing for your specific vehicle...",
   "Checking Sparesbox & Repco...",
   "Comparing labour rates...",

@@ -18,7 +18,7 @@ export default function BullshitMeter({ score, reasoning }) {
       glowColor: "shadow-amber-200"
     };
     return { 
-      icon: AlertCircle, label: "Well Above Market",
+      icon: AlertCircle, label: "Well Above Typical Range",
       text: "text-red-700", bg: "bg-red-50", border: "border-red-200",
       badgeBg: "bg-red-100", badgeText: "text-red-700", barColor: "#ef4444",
       glowColor: "shadow-red-200"

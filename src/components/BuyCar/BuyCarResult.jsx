@@ -7,7 +7,7 @@ const VERDICT_CONFIG = {
   great_deal: { label: "Great Deal", color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-300", icon: ThumbsUp },
   fair: { label: "Fair Price", color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-300", icon: Minus },
   high: { label: "On the High Side", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-300", icon: AlertTriangle },
-  overpriced: { label: "Overpriced", color: "text-red-700", bg: "bg-red-50", border: "border-red-300", icon: ThumbsDown },
+  overpriced: { label: "Above Typical Range", color: "text-red-700", bg: "bg-red-50", border: "border-red-300", icon: ThumbsDown },
 };
 
 const RECO_CONFIG = {
@@ -164,7 +164,7 @@ export default function BuyCarResult({ result, form, onCheckAnother }) {
 
         {/* Disclaimer — quiet but accessible */}
         <SubtleDisclaimer>
-          This report is generated automatically using publicly available market data and is for general guidance only.
+          This report is generated automatically as an estimate and is for general guidance only.
           It does not constitute professional financial, mechanical, or legal advice. Prices and vehicle conditions vary —
           always obtain a licensed pre-purchase inspection before buying any used vehicle. ServCheck accepts no liability
           for decisions made based on this report.

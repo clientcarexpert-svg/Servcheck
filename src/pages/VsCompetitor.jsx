@@ -160,8 +160,8 @@ export default function VsCompetitor({ competitor, slug }) {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-12">
           <StatCard value={stats.quotes} label="Quotes Analysed" loading={loading} />
-          <StatCard value={stats.avgSaving} label="Average Saving Found" loading={loading} />
-          <StatCard value={stats.ripoffRate} label="Ripoff Rate in Australia" loading={loading} />
+          <StatCard value={stats.avgSaving} label="Average Potential Saving" loading={loading} />
+          <StatCard value={stats.ripoffRate} label="Quotes Above Typical Range" loading={loading} />
         </div>
 
         {/* FAQ */}

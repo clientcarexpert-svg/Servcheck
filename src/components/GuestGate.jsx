@@ -57,7 +57,7 @@ export default function GuestGate({ onClose }) {
               <span className="text-sm font-bold text-[#f97316]">$XXX</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">BS Meter</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Variance Meter</span>
               <span className="text-sm font-bold text-slate-700">X / 10</span>
             </div>
           </div>
