@@ -9,7 +9,7 @@ import { syncCreditsFromDB, getCredits, CREDITS_PER_CHECK } from "@/lib/credits"
 const FEATURES = [
   "28 checks a year — quote, symptom & used car checks",
   "Car Buyer Check — valuation before you buy",
-  "Equity Meter — live market value for your car",
+  "Equity Meter — estimated market value for your car",
   "Unlimited logbook, reminders & receipt uploads",
 ];
 

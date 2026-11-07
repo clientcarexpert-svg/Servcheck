@@ -28,7 +28,7 @@ const TOOLS = [
   {
     icon: Car,
     title: "Car Buyer Check",
-    desc: "Market-verified valuation before you commit to a purchase.",
+    desc: "Estimated valuation and checklist before you commit to a purchase.",
     to: "/buy-car",
     accent: "bg-blue-600",
   },
@@ -42,7 +42,7 @@ const TOOLS = [
   {
     icon: BarChart2,
     title: "Community Prices",
-    desc: "Real prices paid by Australians — transparent and verified.",
+    desc: "Prices shared by other Australian drivers.",
     to: "/community",
     accent: "bg-emerald-600",
   },

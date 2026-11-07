@@ -21,8 +21,8 @@ const QUICK_ACTIONS = [
 const TOOLS = [
   { icon: Wrench, title: "Check a Quote", desc: "Find out instantly if your mechanic is charging fairly.", to: "/check-quote", accent: "bg-[#f97316]", border: "border-[#f97316]" },
   { icon: Stethoscope, title: "Symptom Checker", desc: "Describe symptoms — get ranked causes, urgency & repair costs.", to: "/symptom-checker", accent: "bg-rose-600", border: "border-rose-600" },
-  { icon: Car, title: "Car Buyer Check", desc: "Market-verified valuation before you commit to a purchase.", to: "/buy-car", accent: "bg-blue-600", border: "border-blue-600" },
-  { icon: BarChart2, title: "Community Prices", desc: "Real prices paid by Australians — transparent and verified.", to: "/community", accent: "bg-emerald-600", border: "border-emerald-600" },
+  { icon: Car, title: "Car Buyer Check", desc: "Estimated valuation and checklist before you commit to a purchase.", to: "/buy-car", accent: "bg-blue-600", border: "border-blue-600" },
+  { icon: BarChart2, title: "Community Prices", desc: "Prices shared by other Australian drivers.", to: "/community", accent: "bg-emerald-600", border: "border-emerald-600" },
 ];
 
 export default function CustomerHome() {
@@ -69,7 +69,7 @@ export default function CustomerHome() {
             Is your mechanic<br />quote <span className="text-[#f97316]">fair?</span>
           </h1>
           <p className="text-lg leading-relaxed mb-2 text-slate-300 max-w-sm">
-            ServCheck checks your quote against real Australian market data — verdict in seconds.
+            ServCheck compares your quote to typical Australian prices. Get your result in seconds.
           </p>
           <p className="text-sm font-bold text-[#f97316] mb-6">✓ First check on us — <span className="text-emerald-400">free</span></p>
 
@@ -221,10 +221,10 @@ export default function CustomerHome() {
             <div className="space-y-2.5">
               {[
                 { icon: Wrench, title: "Quote Checker", desc: "Instantly know if your quote is a fair price" },
-                { icon: Car, title: "Car Buyer Check", desc: "Market-verified valuation before you buy any used car" },
+                { icon: Car, title: "Car Buyer Check", desc: "Estimated valuation and checklist before you buy any used car" },
                 { icon: BookOpen, title: "Digital Logbook", desc: "Track every service, scan receipts, build equity" },
                 { icon: MapPin, title: "Mechanic Directory", desc: "Find trusted workshops near you" },
-                { icon: Users, title: "Community Forum", desc: "Real prices shared by real Australians" },
+                { icon: Users, title: "Community Forum", desc: "Prices shared by other Australian drivers" },
               ].map(({ icon: Icon, title, desc }, i) => (
                 <div key={i} className="flex items-center gap-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.08] px-4 py-3.5 backdrop-blur-sm">
                   <div className="h-10 w-10 rounded-xl bg-[#f97316] flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/20">

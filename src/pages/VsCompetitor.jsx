@@ -154,7 +154,7 @@ export default function VsCompetitor({ competitor, slug }) {
           >
             Check My Quote Now <ArrowRight className="h-5 w-5" />
           </Link>
-          <p className="text-xs text-slate-500 mt-3">First 3 checks free · No credit card required</p>
+          <p className="text-xs text-slate-500 mt-3">First check free · No credit card required</p>
         </div>
 
         {/* Stats */}

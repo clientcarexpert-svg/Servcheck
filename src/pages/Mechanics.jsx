@@ -11,7 +11,7 @@ const MOBILE_PERKS = [
 
 const WORKSHOP_PERKS = [
   { icon: MapPin, text: "Find trusted local workshops listed on ServCheck" },
-  { icon: Star, text: "Community-verified ratings based on real prices paid" },
+  { icon: Star, text: "Community ratings from other drivers" },
   { icon: Shield, text: "Compare prices before you book" },
 ];
 

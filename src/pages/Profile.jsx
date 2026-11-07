@@ -365,7 +365,7 @@ Base your answer on Australian standards and the specific service type performed
             <div className="text-center py-16">
               <Car className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
               <p className="font-semibold text-muted-foreground">No cars saved yet</p>
-              <p className="text-sm text-muted-foreground/70 mt-1">Add your car to track its live market value.</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">Add your car to track its estimated market value.</p>
             </div>
           ) : (
             <div className="space-y-6">

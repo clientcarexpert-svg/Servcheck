@@ -103,7 +103,7 @@ export default function CarSetupModal({ onClose, onSaved }) {
               </div>
               <div>
                 <h2 className="font-heading font-bold text-lg">Set Up Your Car</h2>
-                <p className="text-blue-200 text-xs">Track your car's live market value</p>
+                <p className="text-blue-200 text-xs">Track your car's estimated market value</p>
               </div>
             </div>
             <button onClick={onClose} className="text-white/70 hover:text-white">

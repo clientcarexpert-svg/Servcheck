@@ -233,7 +233,7 @@ Search CarsGuide, Carsales, and RedBook for current Australian market data. Retu
           {loading && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 rounded-xl">
               <Loader2 className="h-6 w-6 text-[#f97316] animate-spin mb-2" />
-              <p className="text-xs text-slate-500">Fetching live market data…</p>
+              <p className="text-xs text-slate-500">Estimating market value…</p>
             </div>
           )}
         </div>
@@ -415,7 +415,7 @@ Search CarsGuide, Carsales, and RedBook for current Australian market data. Retu
       {/* AI Disclaimer */}
       <div className="px-5 py-2 bg-slate-50 border-t border-slate-100">
         <p className="text-[11px] text-slate-400 leading-relaxed">
-          ⚠️ Estimate only — based on current market data. Not a professional valuation. Actual market value may vary.
+          ⚠️ Estimate only. Not a professional valuation. Actual market value may vary.
         </p>
       </div>
 

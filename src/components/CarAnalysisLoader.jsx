@@ -124,7 +124,7 @@ export default function CarAnalysisLoader({ make, model, year }) {
       </div>
 
       <p className="text-xs text-muted-foreground max-w-xs">
-        We're running live market research — this usually takes 15–25 seconds.
+        We're preparing your estimate. This usually takes 15 to 25 seconds.
       </p>
     </motion.div>
   );
